@@ -3,19 +3,19 @@ import pandas as pd
 import numpy as np
 import sys
 import matplotlib.pyplot as plt
-def createBar(data : dict):
-    plt.figure(figsize=(10, 5))
-
+def createBar(data : dict , key:str):
+    plt.figure(figsize=(15, 5) )
     df = pd.DataFrame(list(data.items()), columns=["Class", "Count"])
     print(df.head())
     plt.subplot(1, 2, 1)
-    plt.pie(df.Count , labels = df.Class )
-    plt.title("Pie Chart")
+    plt.pie(df.Count , labels = df.Class , autopct='%1.1f%%')
+    plt.title(f"{key} Pie Chart")
 
     plt.subplot(1, 2, 2)
     plt.bar(df["Class"],df["Count"], color='skyblue')
-    plt.title("bar Chart")
+    plt.title(f"{key} Bar Chart")
     plt.tight_layout()
+    plt.suptitle(f"{key} class distribution")
     plt.show()  
 
 
@@ -27,7 +27,8 @@ def ft_load(text :str):
             value =  len(files)
             key= root.split('/')[1]
             data[key]=value
-    createBar(data)
+            key1 =  root.split('/')[0]
+    createBar(data , key1)
 
 def main():
     try:
