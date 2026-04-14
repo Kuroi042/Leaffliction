@@ -4,10 +4,18 @@ import numpy as np
 import sys
 import matplotlib.pyplot as plt
 def createBar(data : dict):
+    plt.figure(figsize=(10, 5))
+
     df = pd.DataFrame(list(data.items()), columns=["Class", "Count"])
     print(df.head())
-    plt.pie(df.)
+    plt.subplot(1, 2, 1)
+    plt.pie(df.Count , labels = df.Class )
+    plt.title("Pie Chart")
+
+    plt.subplot(1, 2, 2)
     plt.bar(df["Class"],df["Count"], color='skyblue')
+    plt.title("bar Chart")
+    plt.tight_layout()
     plt.show()  
 
 
@@ -18,10 +26,7 @@ def ft_load(text :str):
                 continue
             value =  len(files)
             key= root.split('/')[1]
-            # print("Folders inside" ,root , count)
-            # print(key.split('/')[1] ,":",value)
             data[key]=value
-            # print(key , value)
     createBar(data)
 
 def main():
