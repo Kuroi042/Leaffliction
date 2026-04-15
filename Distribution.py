@@ -1,6 +1,5 @@
 import os
 import pandas as pd
-import numpy as np
 import sys
 import matplotlib.pyplot as plt
 def createBar(data : dict , key:str):
@@ -19,15 +18,15 @@ def createBar(data : dict , key:str):
     plt.show()  
 
 
-def ft_load(text :str):
+def ft_load(text :any):
     data = {}
-    for root, dirs, files in os.walk("Apple"):
+    for root, dirs, files in os.walk(text):
             if len(files) == 0:
                 continue
             value =  len(files)
-            key= root.split('/')[1]
+            key = os.path.basename(root)      # "Apple_healthy"
             data[key]=value
-            key1 =  root.split('/')[0]
+            key1 =  os.path.basename(text)
     createBar(data , key1)
 
 def main():
@@ -35,10 +34,10 @@ def main():
           assert len(sys.argv) ==2 ,"the arguments are bad"
     except AssertionError as e:
         print(f"AssertionError: {e}")
-    path = str(sys.argv)
+        sys.exit(1)
+    path = str(sys.argv[1])
     ft_load(path)
 
 
 if __name__ ==  "__main__":
      main()
- 
