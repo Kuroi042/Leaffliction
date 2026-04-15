@@ -22,13 +22,18 @@ def ft_flip(path:str):
     img_flip =  cv2.flip(img,rnd.randrange(-1,1)) # range between -1->1
     cv2.imshow('imgflip',img_flip)
     cv2.waitKey(0)
-
+def ft_blur(path:str):
+    img =  cv2.imread(path)
+    img_blur =  cv2.blur(img,(5,5))
+    cv2.imshow('img_blur' , img_blur)
+    cv2.waitKey(0)
 def operate(path:str):
 
     img  = cv2.imread(path)
     cv2.imshow('img',img)
     ft_rotate(path)
     ft_flip(path)
+    ft_blur(path)
     
 
 
