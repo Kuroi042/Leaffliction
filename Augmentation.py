@@ -28,6 +28,36 @@ def ft_flip(path:str):
     img_flip =  cv2.flip(img,rnd.randrange(-1,1)) # range between -1->1
     cv2.imshow('imgflip',img_flip)
     cv2.waitKey(0)
+def skew(path:str):
+    image = cv2.imread(path)
+
+    h, w = image.shape[:2]
+    offset = rnd.randrange(10 , 50)
+    print(offset)
+    # original 4 corners
+    pts1 = np.float32([
+        [0, 0],
+        [w, 0],
+        [0, h],
+        [w, h]
+    ])
+
+    # new 4 corners → top shifted right
+    pts2 = np.float32([
+        [offset, 0],
+        [w + offset, 0],
+        [0, h],
+        [w, h]
+    ])
+
+    M = cv2.getPerspectiveTransform(pts1, pts2)
+    result = cv2.warpPerspective(image, M, (w + offset, h))
+
+ 
+    cv2.imshow('Skewed', result)
+    cv2.waitKey(0)
+
+
 
 
 def ft_scaling(path:str):
@@ -58,8 +88,8 @@ def operate(path:str):
     # ft_blur(path)
     # ft_contrast(path)
     # ft_scaling(path)
-    ft_distort(path)
-
+    # ft_distort(path)
+    skew(path)
 def main():
     try:
         assert len(sys.argv) == 2 , "argument are bad"
