@@ -57,7 +57,21 @@ def skew(path:str):
     cv2.waitKey(0)
 
 
-
+def ft_crop(path:str):
+    img  = cv2.imread(path)
+    h, w =  img.shape[:2]
+    ratio = rnd.choice([0.7,0.8,0.9])
+    new_h =  h*ratio
+    new_w =  h*ratio
+    starty= int((h - new_h)//2) 
+    end_y = int(starty + new_h) 
+    startx = int((w-new_w)//2)
+    endx =  int(startx +  new_w)
+    print(startx , starty)
+    result=  img[starty:end_y, startx:endx]
+    cv2.imshow('cropimg', result)
+    cv2.waitKey(0)
+    
 
 def ft_scaling(path:str):
     img =  cv2.imread(path)
@@ -77,6 +91,46 @@ def ft_shear(path:str):
     shear = cv2.warpAffine(img,rnd.choice([Mv, Mh]) , (w, h))
     cv2.imshow('shear',shear)
     cv2.waitKey(0)
+def distort(path:str):
+    img = cv2.imread(path)
+    h, w = img.shape[:2]
+
+    strength = rnd.randrange(50,80)
+
+    map_x, map_y = np.meshgrid(
+        np.arange(w),
+        np.arange(h)
+    )
+
+    # force float32 from the start
+    map_x = map_x.astype(np.float32)
+    map_y = map_y.astype(np.float32)
+
+    noise_x = (np.random.randn(h, w) * strength).astype(np.float32)
+    noise_y = (np.random.randn(h, w) * strength).astype(np.float32)
+
+    # blur the noise
+    noise_x = cv2.GaussianBlur(noise_x, (51, 51), 0).astype(np.float32)
+    noise_y = cv2.GaussianBlur(noise_y, (51, 51), 0).astype(np.float32)
+
+    # add noise to maps
+    map_x = map_x + noise_x
+    map_y = map_y + noise_y
+
+    # final safety cast
+    map_x = map_x.astype(np.float32)
+    map_y = map_y.astype(np.float32)
+
+    distorted = cv2.remap(
+        img,
+        map_x,
+        map_y,
+        cv2.INTER_LINEAR,
+        borderMode=cv2.BORDER_REFLECT
+    )
+    cv2.imshow('Distorted',distorted)
+    cv2.waitKey(0)
+
 def operate(path:str):
 
     img  = cv2.imread(path)
@@ -87,8 +141,9 @@ def operate(path:str):
     # ft_blur(path)
     # ft_contrast(path)
     # ft_scaling(path)
-    # ft_distort(path)
-    skew(path)
+    # skew(path)
+    distort(path)
+    # ft_crop(path)
 def main():
     try:
         assert len(sys.argv) == 2 , "argument are bad"
