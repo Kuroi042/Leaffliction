@@ -197,7 +197,6 @@ def operate(path:str):
         'Distortion': distort(path)
     }
     display(path, results)
-
 def main():
     try:
         assert len(sys.argv) == 2 , "argument are bad"
