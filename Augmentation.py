@@ -6,6 +6,22 @@ import random as rnd
 from pathlib import Path
 cv2.namedWindow('img', cv2.WINDOW_NORMAL)
 
+
+
+
+def Name_Maker(path:str , func:str):
+    path2 =  Path(*path.parts[:2])
+    name  =  str(path).split("/")[2]    
+    slimame = name.split('.')[0]
+    ext =  name.split('.')[1]
+    # print(slimame,ext)
+    # print(slimame ,'+' ,ext)
+    save_path =  os.path.join(path2, slimame+func+'.'+ext)
+    print(f"Saving {func} Done !!!")
+
+    return save_path
+
+
 def ft_rotate(path:str):
     img  =  cv2.imread(path)
     (h, w) = img.shape[:2]
@@ -14,13 +30,15 @@ def ft_rotate(path:str):
     scale = 1.0
     M = cv2.getRotationMatrix2D(center, angle, scale)
     rotated_image = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)
-    cv2.imshow('Rotated Leaf', rotated_image)    
-    cv2.waitKey(0)
+    save_path = Name_Maker(path,'_Rotate')
+    print(save_path)
+    cv2.imwrite(save_path, rotated_image)
+
 def ft_flip(path:str):
     img  =  cv2.imread(path)
     img_flip =  cv2.flip(img,rnd.randrange(-1,1)) # range between -1->1
-    cv2.imshow('imgflip',img_flip)
-    cv2.waitKey(0)
+    save_path = Name_Maker(path,'_Flip')
+    cv2.imwrite(save_path, img_flip)
 
 def skew(path:str):
     image = cv2.imread(path)
@@ -29,7 +47,6 @@ def skew(path:str):
     # how mucht he image will be skewed 10-20 of the width
     offset = rnd.randint(int(w*0.1),int(w*0.2)) #(10%-20%) of width 
     # (256, 256, 3)
-    print(image.shape)
     # original 4 corners
     pts1 = np.float32([
         [0, 0],
@@ -53,8 +70,8 @@ def skew(path:str):
     result = cv2.warpPerspective(image, M, (w+offset, h))
     # print(result.shape)
     # (256, 296, 3)
-    cv2.imshow('Skewed', result)
-    cv2.waitKey(0)
+    save_path = Name_Maker(path,'_Skew')
+    cv2.imwrite(save_path, result)
 
 
 def ft_crop(path:str):
@@ -67,21 +84,20 @@ def ft_crop(path:str):
     end_y = int(starty + new_h) 
     startx = int((w-new_w)//2)
     endx =  int(startx +  new_w)
-    print(startx , starty)
     result=  img[starty:end_y, startx:endx]
-    cv2.imshow('cropimg', result)
-    cv2.waitKey(0)
+    save_path = Name_Maker(path,'_Crop')
+    cv2.imwrite(save_path, result)
     
 
 def ft_scaling(path:str):
     img =  cv2.imread(path)
     resized_img = cv2.resize(img, ((224, 224)))
-    cv2.imshow('img_scale',resized_img)
-    cv2.waitKey(0)
+    save_path = Name_Maker(path,'_Scale')
+    cv2.imwrite(save_path, resized_img)
+
 
 def ft_shear(path:str):
     img = cv2.imread(path)
-    print(img.shape)
     h,w = img.shape[:2]
     shear_factor = 0.3
     Mh = np.float32([[1, shear_factor, 0],
@@ -89,9 +105,15 @@ def ft_shear(path:str):
     Mv = np.float32([[1, 0, 0],
                     [0.3 ,1, 0]])
     shear = cv2.warpAffine(img,rnd.choice([Mv, Mh]) , (w, h))
-    cv2.imshow('shear',shear)
-    cv2.waitKey(0)
+    save_path = Name_Maker(path,'_Shear')
+    cv2.imwrite(save_path, shear)
+
+
+
 def distort(path:str):
+    # print(path)
+    name =  str(path).split('/')[2]
+    # print(name)
     img = cv2.imread(path)
     h, w = img.shape[:2]
 
@@ -128,22 +150,26 @@ def distort(path:str):
         cv2.INTER_LINEAR,
         borderMode=cv2.BORDER_REFLECT
     )
-    cv2.imshow('Distorted',distorted)
-    cv2.waitKey(0)
+    # path =  str(path).split('/')[[0],[1]]
+    save_path = Name_Maker(path,'_Distortion')
+    
+    cv2.imwrite(save_path, img)
+
+
+
 
 def operate(path:str):
 
     img  = cv2.imread(path)
     cv2.imshow('img',img)
-    # ft_rotate(path)
-    # ft_flip(path)
-    # ft_shear(path)
-    # ft_blur(path)
-    # ft_contrast(path)
-    # ft_scaling(path)
-    # skew(path)
+    ft_rotate(path)
+    ft_flip(path)
+    ft_shear(path)
+    ft_scaling(path)
+    skew(path)
     distort(path)
-    # ft_crop(path)
+    ft_crop(path)
+
 def main():
     try:
         assert len(sys.argv) == 2 , "argument are bad"
