@@ -7,13 +7,24 @@ from pathlib import Path
 import cv2
 
 def    Execute_filter(Path):
-    pcv.params.debug = None
+    import matplotlib
+    # pcv.params.debug = "plot" 
     img, _, _ = pcv.readimage(filename=Path, mode="native")
-    gray = pcv.rgb2gray(rgb_img=img)
-    threshold_dark = pcv.threshold.otsu(gray_img=gray, object_type='dark')
+    
+    # colors = pcv.visualize.colorspaces(rgb_img=img, original_img=False)
+    # plt.imshow(colors, cmap='gray')
+    # a = pcv.rgb2gray_lab(img, 'a')
+    # blur = pcv.gaussian_blur(img=a, ksize=(5,5))
+    # # bin_gauss1 = pcv.threshold.gaussian(gray_img=blur, ksize=31, offset=7,object_type='dark')
+    # thresh = pcv.threshold.otsu(
+    # gray_img=blur,
+    # object_type='dark'
+# )
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    blur = cv2.GaussianBlur(hsv,(5,5),0)
+    plt.imshow(blur, cmap='gray')
 
-    cv2.imshow("Image", threshold_dark)
-    cv2.waitKey(0)
+    plt.show()
 def main():
     try:
         assert len(sys.argv) == 2 , "argument are bad"
