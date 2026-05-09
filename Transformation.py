@@ -27,10 +27,12 @@ def    Execute_filter(Path):
     masked = pcv.apply_mask(
         img=img,
         mask=mask,
-        mask_color="black"
+        mask_color="white"
     )
 
-    plt.imshow( masked)
+    plt.imshow(blur_thresh)
+    # plt.imshow( masked)
+    plt.show()
     plt.show()
     # return blur
     #### mask
