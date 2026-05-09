@@ -9,19 +9,37 @@ import cv2
 def    Execute_filter(Path):
     import matplotlib
     img, _, _ = pcv.readimage(filename=Path, mode="native")
-    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-
-    # step 2: apply gaussian blur
-    blur = cv2.GaussianBlur(gray, (3, 3), 0)
-    _, thresh = cv2.threshold(
-        blur,
-        0,      # threshold value
-        255,    # max value
-        cv2.THRESH_BINARY_INV +cv2.THRESH_OTSU
+    gray = pcv.rgb2gray_hsv(rgb_img=img, channel="s")    
+    thresh = pcv.threshold.binary(
+            gray_img=gray, threshold=60,  object_type="light"
+        )
+    blur = pcv.gaussian_blur(img=thresh, ksize=(5, 5), sigma_x=0, sigma_y=None)
+    # mask = pcv.fill(blur, size=200)
+    blur_thresh = pcv.threshold.binary(
+        gray_img=blur,
+        threshold=127,
+        object_type="light"
+    )
+    mask = pcv.fill(
+        bin_img=blur_thresh,
+        size=200
+    )
+    masked = pcv.apply_mask(
+        img=img,
+        mask=mask,
+        mask_color="black"
     )
 
-    plt.imshow( thresh, cmap='gray')
+    plt.imshow( masked)
     plt.show()
+    # return blur
+    #### mask
+
+# def mask(path:str):
+
+    
+
+    
 
 def main():
     try:
