@@ -5,9 +5,28 @@ import numpy as np
 from plantcv import plantcv as pcv
 from pathlib import Path
 import cv2
+class handytools:
+    def __init__(self, path,debug=None, outdir="."):
+        self.image = path
+        self.debug = debug
+        self.outdir = outdir
+        if not os.path.isdir(self.outdir):
+            os.makedirs(self.outdir)
 
-def    Execute_filter(Path):
-    import matplotlib
+class Transforme:
+    def __init__(self, handytools):
+        self.handytools = handytools
+        self.path = handytools.image
+        self.rgb =   None
+        self.blur =  None
+        self.mask =  None
+    
+def read_orginal(self):  
+    img ,_,_=pcv.readimage(filename=self, mode="native")
+    # if self.handytools.debug =  
+
+def    blur(Path):
+    if 
     img, _, _ = pcv.readimage(filename=Path, mode="native")
     gray = pcv.rgb2gray_hsv(rgb_img=img, channel="s")    
     thresh = pcv.threshold.binary(
