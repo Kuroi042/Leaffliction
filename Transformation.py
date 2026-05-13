@@ -79,18 +79,7 @@ class Transforme:
         plt.imshow(self.mask)
         plt.show()
         return self.mask
-
-
-
-        
-# def display(self):
-#     if self.rgb is not None:
-#         plt.imshow(
-#             cv2.cvtColor(self.rgb, cv2.COLOR_BGR2RGB)
-#         )
-#         plt.title('Original')
-#         plt.axis('off')
-#         plt.show()
+    
 def Execute_filter(tools:handytools):
     leaf  =  Transforme(tools)
     leaf.read_orginal()
@@ -110,40 +99,6 @@ def main():
     # read_orginal()
 if __name__ == "__main__":
     main()
-
-
-# def    blur(Path):
-
-#     img, _, _ = pcv.readimage(filename=Path, mode="native")
-#     gray = pcv.rgb2gray_hsv(rgb_img=img, channel="s")    
-#     thresh = pcv.threshold.binary(
-#             gray_img=gray, threshold=60,  object_type="light"
-#         )
-#     blur = pcv.gaussian_blur(img=thresh, ksize=(5, 5), sigma_x=0, sigma_y=None)
-#     # mask = pcv.fill(blur, size=200)
-#     blur_thresh = pcv.threshold.binary(
-#         gray_img=blur,
-#         threshold=127,
-#         object_type="light"
-#     )
-#     mask = pcv.fill(
-#         bin_img=blur_thresh,
-#         size=200
-#     )
-#     masked = pcv.apply_mask(
-#         img=img,
-#         mask=mask,
-#         mask_color="white"
-#     )
-
-#     plt.imshow(blur_thresh)
-#     # plt.imshow( masked)
-#     plt.show()
-#     plt.show()
-#     # return blur
-#     #### mask
-
-# def mask(path:str):
 
     
 
