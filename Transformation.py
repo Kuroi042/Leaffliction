@@ -31,25 +31,24 @@ class Transforme:
         if self.rgb is not None:
             print("rgb is here successfully ! ")
         self.rgb =cv2.cvtColor(self.rgb , cv2.COLOR_BGR2RGB)
-
-        # plt.imshow(cv2.cvtColor(self.rgb , cv2.COLOR_BGR2RGB))
-        # plt.imshow(self.rgb)
-        # plt.show()
         return self.rgb
         
     def gaussian_blur(self):
         if self.rgb is None:
             self.read_orginal()
-        # self.rgb =cv2.cvtColor(self.rgb , cv2.COLOR_BGR2RGB)
         gray = pcv.rgb2gray_hsv(rgb_img=self.rgb, channel="s")
-        # Smooth before thresholding to reduce noise sensitivity
-        blur = cv2.GaussianBlur(gray, (5, 5), 0)
-        # Otsu picks a data-driven threshold for varied lighting
-        _, thresh = cv2.threshold(
-            blur,
-            0,
-            255,
-            cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        # plt.imshow(gray)
+        blur = cv2.GaussianBlur(gray, (7, 7), 1)
+        # _, thresh = cv2.threshold(
+        #     blur,
+        #     0,
+        #     255,
+        #     cv2.THRESH_BINARY + cv2.THRESH_OTSU
+        # )
+        thresh = pcv.threshold.binary(
+        gray_img=blur,
+        threshold=65,
+        object_type="light"
         )
         self.blur = thresh
 
@@ -57,7 +56,7 @@ class Transforme:
         # plt.imshow(self.blur,cmap="gray")
         # plt.show()
         return self.blur
-    
+
     def mask_filter(self):
         if self.blur is None:
             self.gaussian_blur()
