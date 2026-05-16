@@ -19,9 +19,12 @@ class Transforme:
         self.debug =  tools.debug
         self.outdir = tools.outdir
         self.rgb =   None
-        # self.tresh = None
+        self.tresh = None
         self.blur =  None
         self.mask =  None
+        self.roi =None
+        self.mask1 = None
+ 
         pcv.params.debug = self.debug
         pcv.params.debug_outdir = self.outdir
 
@@ -39,12 +42,7 @@ class Transforme:
         gray = pcv.rgb2gray_hsv(rgb_img=self.rgb, channel="s")
         # plt.imshow(gray)
         blur = cv2.GaussianBlur(gray, (7, 7), 1)
-        # _, thresh = cv2.threshold(
-        #     blur,
-        #     0,
-        #     255,
-        #     cv2.THRESH_BINARY + cv2.THRESH_OTSU
-        # )
+
         thresh = pcv.threshold.binary(
         gray_img=blur,
         threshold=65,
@@ -53,8 +51,6 @@ class Transforme:
         self.blur = thresh
 
         print("blur is here")
-        # plt.imshow(self.blur,cmap="gray")
-        # plt.show()
         return self.blur
 
     def mask_filter(self):
@@ -65,19 +61,60 @@ class Transforme:
             threshold=127,
             object_type="light"
         )
-
-        mask1 = pcv.fill(
+        self.mask1 = pcv.fill(
             bin_img=thresh_blur,
             size=200
         )
+ 
         self.mask = pcv.apply_mask(
         img=self.rgb,
-        mask=mask1,
-        mask_color="white"
-    )
-        # plt.imshow(self.mask)
-        # plt.show()
+        mask=self.mask1,
+        mask_color="white")
+        plt.imshow(self.mask)
+        plt.show()
         return self.mask
+    def Roi(self):
+
+        roi =  pcv.roi.rectangle(img=self.rgb, x=0,y=0,
+                                w = self.rgb.shape[1],
+                                h=self.rgb.shape[1])
+        # *cleaned mask with only leaf pixels
+        filtered_mask = pcv.roi.filter(
+            mask=self.mask1,# * black and white img
+            roi=roi, # * defined rect
+            roi_type="partial"
+        )
+        # * green where leaf is, black where background is
+        colored = pcv.visualize.colorize_masks(
+            masks=[filtered_mask],
+            colors=["green"]
+        )
+        # * image ready for matplotlib display
+        original_rgb = cv2.cvtColor(
+        self.rgb,cv2.COLOR_BGR2RGB)
+
+        # * original + green  blended 2gether
+        blended = cv2.addWeighted(
+        original_rgb, 0.5,colored, 0.6,0)
+        contours, _ = cv2.findContours(
+        filtered_mask, ## *  black/white mask to find edges in
+        cv2.RETR_EXTERNAL, ## outer cadre
+        cv2.CHAIN_APPROX_NONE ##)
+        )
+        largest = max(contours, key=cv2.contourArea)
+        x, y, w, h = cv2.boundingRect(largest)
+        cv2.rectangle(
+        blended,
+        (x, y),
+        (x + w, y + h),
+        (0, 0, 255),
+        3
+    )
+        self.roi = blended
+        # plt.imshow(self.roi)
+        # plt.show()
+        return self.roi
+
 
     def display(self):
         if self.rgb is None:
@@ -87,7 +124,7 @@ class Transforme:
         if self.mask is None:
             self.mask_filter()
 
-        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
+        fig, axes = plt.subplots(1, 4, figsize=(15, 5))
         axes[0].imshow(self.rgb)
         axes[0].set_title("Figure IV.1 : Original")
         axes[0].axis("off")
@@ -99,6 +136,9 @@ class Transforme:
         axes[2].imshow(self.mask)
         axes[2].set_title("Figure IV.3 :Masked")
         axes[2].axis("off")
+        axes[3].imshow(self.roi)
+        axes[3].set_title("Figure IV.3 :Masked")
+        axes[3].axis("off")
 
         plt.tight_layout()
         plt.show()
@@ -108,6 +148,7 @@ def Execute_filter(tools:handytools):
     leaf.read_orginal()
     leaf.gaussian_blur()
     leaf.mask_filter()
+    leaf.Roi()
     leaf.display()
 
 
