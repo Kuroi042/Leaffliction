@@ -22,8 +22,11 @@ class Transforme:
         self.tresh = None
         self.blur =  None
         self.mask =  None
+        self.filtered_mask =None
+
         self.roi =None
         self.mask1 = None
+        self.analyzed =  None
  
         pcv.params.debug = self.debug
         pcv.params.debug_outdir = self.outdir
@@ -35,7 +38,7 @@ class Transforme:
             print("rgb is here successfully ! ")
         self.rgb =cv2.cvtColor(self.rgb , cv2.COLOR_BGR2RGB)
         return self.rgb
-        
+
     def gaussian_blur(self):
         if self.rgb is None:
             self.read_orginal()
@@ -45,7 +48,7 @@ class Transforme:
 
         thresh = pcv.threshold.binary(
         gray_img=blur,
-        threshold=65,
+        threshold=65, ## * low 
         object_type="light"
         )
         self.blur = thresh
@@ -56,13 +59,13 @@ class Transforme:
     def mask_filter(self):
         if self.blur is None:
             self.gaussian_blur()
-        thresh_blur = pcv.threshold.binary(
-            gray_img=self.blur,
-            threshold=127,
-            object_type="light"
-        )
+        # thresh_blur = pcv.threshold.binary(
+        #     gray_img=self.blur,
+        #     threshold=127,
+        #     object_type="light"
+        # )
         self.mask1 = pcv.fill(
-            bin_img=thresh_blur,
+            bin_img=self.blur,
             size=200
         )
  
@@ -70,23 +73,35 @@ class Transforme:
         img=self.rgb,
         mask=self.mask1,
         mask_color="white")
-        plt.imshow(self.mask)
-        plt.show()
+        # plt.imshow(self.mask)
+        # plt.show()
         return self.mask
+    '''
+    1- rectangle covers the entire image
+    2- cleaned mask with only leaf pixels
+    3- green where leaf is, black where background is
+    4- image ready for matplotlib display
+    5- original + green overlay blended together
+    6- list of contours (leaf edges)
+    7- _largest_  the leaf contour (biggest object)
+    8- 4 numbers defining rectangle around leaf
+    9- blue rectangle drawn around the leaf
+    '''
+
     def Roi(self):
 
         roi =  pcv.roi.rectangle(img=self.rgb, x=0,y=0,
                                 w = self.rgb.shape[1],
                                 h=self.rgb.shape[1])
         # *cleaned mask with only leaf pixels
-        filtered_mask = pcv.roi.filter(
+        self.filtered_mask = pcv.roi.filter(
             mask=self.mask1,# * black and white img
             roi=roi, # * defined rect
             roi_type="partial"
         )
         # * green where leaf is, black where background is
         colored = pcv.visualize.colorize_masks(
-            masks=[filtered_mask],
+            masks=[self.filtered_mask],
             colors=["green"]
         )
         # * image ready for matplotlib display
@@ -97,7 +112,7 @@ class Transforme:
         blended = cv2.addWeighted(
         original_rgb, 0.5,colored, 0.6,0)
         contours, _ = cv2.findContours(
-        filtered_mask, ## *  black/white mask to find edges in
+        self.filtered_mask, ## *  black/white mask to find edges in
         cv2.RETR_EXTERNAL, ## outer cadre
         cv2.CHAIN_APPROX_NONE ##)
         )
@@ -107,14 +122,96 @@ class Transforme:
         blended,
         (x, y),
         (x + w, y + h),
-        (0, 0, 255),
-        3
+        (0, 0, 255), ### blue contour
+        3 
     )
         self.roi = blended
-        # plt.imshow(self.roi)
-        # plt.show()
         return self.roi
+    
 
+    '''
+    find the leaf shape
+    draw its outline in pink
+    find its center point
+    draw a cross at center
+    draw inner details in blue
+    '''
+
+    def analyze_object(self):
+        if self.roi is None:
+            self.mask_filter()
+
+        #1: copy original image
+        analyze_img = cv2.cvtColor(
+            self.rgb.copy(),
+            cv2.COLOR_BGR2RGB
+        )
+
+        #2 find contours
+        ###* list of contour point around leaf edge
+        contours, _ = cv2.findContours(
+            self.filtered_mask, ###* black and white mask 
+            cv2.RETR_EXTERNAL, ####* OUTER edges only
+            cv2.CHAIN_APPROX_SIMPLE ###* compress points to save memory
+        )
+        if not contours:
+            print("no contours found!")
+            return None
+        #3: get largest contour (leaf)
+        largest = max(contours, key=cv2.contourArea)
+        # step 4: draw pink outline around leaf
+        cv2.drawContours( ###* perfect contoure pink 
+            analyze_img,
+            [largest],
+            -1,
+            (0, 0, 255),  # pink/magenta
+            10
+        )
+
+        # step 5: find centroid
+        M = cv2.moments(largest)
+        if M['m00'] != 0:
+            cx = int(M['m10'] / M['m00'])
+            cy = int(M['m01'] / M['m00'])
+
+            # step 6: draw pink cross at centroid
+            cv2.line(
+                analyze_img,
+                (cx - 20, cy),
+                (cx + 20, cy),
+                (255, 0, 255),  # pink
+                5
+            )
+            cv2.line(
+                analyze_img,
+                (cx, cy - 20),
+                (cx, cy + 20),
+                (255, 0, 255),  # pink
+                5
+            )
+
+        # step 7: draw blue inner contours
+        contours_all, _ = cv2.findContours(
+            self.filtered_mask,
+            cv2.RETR_EXTERNAL,      # all contours including inner
+            cv2.CHAIN_APPROX_SIMPLE
+        )
+        cv2.drawContours(
+            analyze_img,
+            contours_all,
+            -1,
+            (255, 0, 255),    # blue
+            5
+        )
+
+        self.analyzed = analyze_img
+
+        plt.imshow(self.analyzed)
+        plt.title('Analyze Object')
+        plt.axis('off')
+        plt.show()
+
+        return self.analyzed
 
     def display(self):
         if self.rgb is None:
@@ -124,21 +221,26 @@ class Transforme:
         if self.mask is None:
             self.mask_filter()
 
-        fig, axes = plt.subplots(1, 4, figsize=(15, 5))
+        fig, axes = plt.subplots(1, 5, figsize=(15, 6))
         axes[0].imshow(self.rgb)
-        axes[0].set_title("Figure IV.1 : Original")
+        axes[0].set_title("Figure I.1 : Original")
         axes[0].axis("off")
 
         axes[1].imshow(self.blur, cmap="gray")
-        axes[1].set_title("Figure IV.2 : Blur/Threshold")
+        axes[1].set_title("Figure II.2 : Blur/Threshold")
         axes[1].axis("off")
 
         axes[2].imshow(self.mask)
         axes[2].set_title("Figure IV.3 :Masked")
         axes[2].axis("off")
+
         axes[3].imshow(self.roi)
-        axes[3].set_title("Figure IV.3 :Masked")
+        axes[3].set_title("Figure V.4 :Roi")
         axes[3].axis("off")
+
+        axes[4].imshow(self.analyzed)
+        axes[4].set_title("Figure VI.3 :Analysed ")
+        axes[4].axis("off")
 
         plt.tight_layout()
         plt.show()
@@ -149,7 +251,8 @@ def Execute_filter(tools:handytools):
     leaf.gaussian_blur()
     leaf.mask_filter()
     leaf.Roi()
-    leaf.display()
+    leaf.analyze_object()
+    # leaf.display()
 
 
 def main():
