@@ -19,7 +19,7 @@ class Transforme:
         self.debug =  tools.debug
         self.outdir = tools.outdir
         self.rgb =   None
-        self.tresh = None
+        self.max_thresh = None
         self.blur =  None
         self.mask =  None
         self.filtered_mask =None
@@ -45,7 +45,6 @@ class Transforme:
         gray = pcv.rgb2gray_hsv(rgb_img=self.rgb, channel="s")
         # plt.imshow(gray)
         blur = cv2.GaussianBlur(gray, (7, 7), 1)
-
         thresh = pcv.threshold.binary(
         gray_img=blur,
         threshold=65, ## * low 
@@ -167,7 +166,7 @@ class Transforme:
             (0, 0, 255),  # pink/magenta
             10
         )
-
+############################################***
         # step 5: find centroid
         M = cv2.moments(largest)
         if M['m00'] != 0:
@@ -191,19 +190,30 @@ class Transforme:
             )
 
         # step 7: draw blue inner contours
-        contours_all, _ = cv2.findContours(
-            self.filtered_mask,
-            cv2.RETR_EXTERNAL,      # all contours including inner
-            cv2.CHAIN_APPROX_SIMPLE
-        )
+        # plt.imshow(self.max_thresh)
+        # plt.show() 
+####################################**        
+        # outtercontour, _ = cv2.findContours(
+        #     self.filtered_mask,
+        #     cv2.RETR_EXTERNAL,      # all contours including inner
+        #     cv2.CHAIN_APPROX_SIMPLE
+        # )
+        # cv2.drawContours(
+        #     analyze_img,
+        #     outtercontour,
+        #     -1,
+        #     (255, 0, 255),    # pinko
+        #     8
+        # )
+        hull = cv2.convexHull(largest)
+
         cv2.drawContours(
             analyze_img,
-            contours_all,
+            [hull],
             -1,
-            (255, 0, 255),    # blue
-            5
+            (255, 0, 255),
+            10
         )
-
         self.analyzed = analyze_img
 
         plt.imshow(self.analyzed)
