@@ -255,7 +255,7 @@ class Transforme:
                 (opposite_x, opposite_y), # Starts at the opposite base/stem side
                 (tip_x, tip_y),           # Ends at the tip
                 (255, 0, 255),
-                5
+                10
             )
 ####################################**        
         self.analyzed = analyze_img
