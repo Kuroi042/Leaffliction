@@ -5,6 +5,8 @@ import numpy as np
 from plantcv import plantcv as pcv
 from pathlib import Path
 import cv2
+import math
+
 class handytools:
     def __init__(self, path,debug=None, outdir="."):
         self.image = path
@@ -141,10 +143,7 @@ class Transforme:
             self.mask_filter()
 
         #1: copy original image
-        analyze_img = cv2.cvtColor(
-            self.rgb.copy(),
-            cv2.COLOR_BGR2RGB
-        )
+        analyze_img = self.rgb
 
         #2 find inner contours for the leaf using the mask 
         ###* list of contour point around leaf edge
@@ -171,34 +170,18 @@ class Transforme:
 ###* the average position of all pixels in the leaf shape
 ##* distance of spots from center
 ##* spread direction of disease
-        M = cv2.moments(largest)
-        if M['m00'] != 0:
-            cx = int(M['m10'] / M['m00'])
-            cy = int(M['m01'] / M['m00'])
-
-            # step 6: draw pink cross at centroid
-            cv2.line(
-                analyze_img,
-                (cx - 20, cy),
-                (cx + 20, cy),
-                (255, 0, 255),  # pink
-                5
-            )
-            cv2.line(
-                analyze_img,
-                (cx, cy - 20),
-                (cx, cy + 20),
-                (255, 0, 255),  # pink
-                5
-            )
-
-        # step 7: draw blue inner contours
-        # plt.imshow(self.max_thresh)
-        # plt.show() 
-####################################**        
-
+####*
+#*Convex Hull
+#*Smooth outer perimeter of leaf
+#*Centroid    ↓
+#*Center point of leaf
+#*Vertical Axis
+#* Line passing through centroid
+#*Tip Line    ↓
+#* Line from centroid to farthest point on leaf
         hull = cv2.convexHull(largest)
 
+        # Convex Hull
         cv2.drawContours(
             analyze_img,
             [hull],
@@ -206,6 +189,75 @@ class Transforme:
             (255, 0, 255),
             10
         )
+
+        # Centroid
+        M = cv2.moments(largest)
+        if M["m00"] != 0:
+
+            cx = int(M["m10"] / M["m00"])
+            cy = int(M["m01"] / M["m00"])
+
+            # Draw centroid
+            cv2.circle(
+                analyze_img,
+                (cx, cy),
+                10,
+                (255, 0, 255),
+                -1
+            )
+            # Vertical axis
+            cv2.line(
+                analyze_img,
+                (cx, 0),
+                (cx, analyze_img.shape[0]),
+                (255, 0, 255),
+                5
+            )
+            # Find leaf tip
+            hull_pts = hull.reshape(-1, 2)
+
+            distances = np.sqrt(
+                (hull_pts[:, 0] - cx) ** 2 +
+                (hull_pts[:, 1] - cy) ** 2
+            )
+
+            tip = hull_pts[np.argmax(distances)]
+            tip_x = int(tip[0])
+            tip_y = int(tip[1])
+            
+            # --- EXTEND LINE TO OPPOSITE SIDE ---
+            
+            # 1. Get the direction vector from centroid to tip
+            dx = tip_x - cx
+            dy = tip_y - cy
+            
+            # 2. Normalize this vector so its length is 1
+            line_len = np.sqrt(dx**2 + dy**2)
+            ux = dx / line_len
+            uy = dy / line_len
+            
+            # 3. Project all hull points onto this line axis to find the opposite extreme
+            # (This ensures the opposite point is perfectly aligned with the diagonal)
+            hull_vectors_x = hull_pts[:, 0] - cx
+            hull_vectors_y = hull_pts[:, 1] - cy
+            projections = (hull_vectors_x * ux) + (hull_vectors_y * uy)
+            
+            # The tip is the maximum projection, the opposite side is the minimum projection
+            min_projection = np.min(projections)
+            
+            # 4. Calculate the perfect starting point on the opposite side
+            opposite_x = int(cx + min_projection * ux)
+            opposite_y = int(cy + min_projection * uy)
+
+            # Draw the FULL diagonal line passing through the centroid
+            cv2.line(
+                analyze_img,
+                (opposite_x, opposite_y), # Starts at the opposite base/stem side
+                (tip_x, tip_y),           # Ends at the tip
+                (255, 0, 255),
+                5
+            )
+####################################**        
         self.analyzed = analyze_img
 
         plt.imshow(self.analyzed)
