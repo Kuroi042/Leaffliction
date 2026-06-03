@@ -146,28 +146,31 @@ class Transforme:
             cv2.COLOR_BGR2RGB
         )
 
-        #2 find contours
+        #2 find inner contours for the leaf using the mask 
         ###* list of contour point around leaf edge
         contours, _ = cv2.findContours(
             self.filtered_mask, ###* black and white mask 
             cv2.RETR_EXTERNAL, ####* OUTER edges only
-            cv2.CHAIN_APPROX_SIMPLE ###* compress points to save memory
+            cv2.CHAIN_APPROX_SIMPLE ###* compress points to save memory len ~4
         )
-        if not contours:
+        if not contours: ##*jad3ana
             print("no contours found!")
             return None
-        #3: get largest contour (leaf)
-        largest = max(contours, key=cv2.contourArea)
+        #*3: get ONLY 1 largest contour "contour1"
+        largest = max(contours, key=cv2.contourArea)##* contoursArea get values from findcoutours
         # step 4: draw pink outline around leaf
         cv2.drawContours( ###* perfect contoure pink 
             analyze_img,
-            [largest],
+            [largest], ##* only one cntour fron max()
             -1,
             (0, 0, 255),  # pink/magenta
             10
         )
 ############################################***
-        # step 5: find centroid
+        # step 5: find centroid 
+###* the average position of all pixels in the leaf shape
+##* distance of spots from center
+##* spread direction of disease
         M = cv2.moments(largest)
         if M['m00'] != 0:
             cx = int(M['m10'] / M['m00'])
@@ -193,18 +196,7 @@ class Transforme:
         # plt.imshow(self.max_thresh)
         # plt.show() 
 ####################################**        
-        # outtercontour, _ = cv2.findContours(
-        #     self.filtered_mask,
-        #     cv2.RETR_EXTERNAL,      # all contours including inner
-        #     cv2.CHAIN_APPROX_SIMPLE
-        # )
-        # cv2.drawContours(
-        #     analyze_img,
-        #     outtercontour,
-        #     -1,
-        #     (255, 0, 255),    # pinko
-        #     8
-        # )
+
         hull = cv2.convexHull(largest)
 
         cv2.drawContours(
