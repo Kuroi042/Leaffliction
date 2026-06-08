@@ -9,6 +9,18 @@ int onlycpp(std::string towrite)
     return(0);
 }
 
+void read_list(RCPP::list thas)
+{
+    RCPP::list::iterator it = thas.begin();
+    while (it != it.end())
+    {
+        /* code */
+        std::cout << *it
+        it++; 
+    }
+    
+}
+
 
 
 
@@ -25,3 +37,6 @@ int totot(std::string fromR, int miw)
 
     return(1);
 }
+
+
+// void run()
