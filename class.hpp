@@ -2,6 +2,9 @@
 #include <iostream>
 #include <Rcpp.h>
 #include <string>
+#include <typeinfo>
+#include <opencv2/opencv.hpp>
+
 using namespace Rcpp;
 
 
@@ -19,3 +22,16 @@ public:
     int neolasom();
 };
 
+class image 
+{
+    private:
+    std::string path;
+    std::string marad;
+    cv::Mat myimg;
+    //tswora
+    public:
+    image(std::string _path , std::string _marad);
+    ~image();
+    void summary();
+
+};

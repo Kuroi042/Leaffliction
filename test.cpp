@@ -1,42 +1,36 @@
 
 #include "class.hpp"
-using namespace Rcpp;
+
+// [[Rcpp::plugins(cpp17)]]
 
 
 int onlycpp(std::string towrite)
 {
-    std::cout << towrite << std::endl;
+    std::cout << "c++ wrote " << towrite << std::endl;
     return(0);
 }
-
-void read_list(RCPP::list thas)
-{
-    RCPP::list::iterator it = thas.begin();
-    while (it != it.end())
-    {
-        /* code */
-        std::cout << *it
-        it++; 
-    }
-    
-}
-
 
 
 
 // [[Rcpp::export]]
-int totot(std::string fromR, int miw)
+int cppmain(std::string fromR , Rcpp::List folders_list)
 {
-    hh *h = new hh(miw,20);
 
-    std::cout << "hhlasom " << h->lasom(9 , 88) << std::endl;
-    std::cout << "hhneolasom " << h->neolasom() << " " << std::endl;
-    onlycpp(fromR);
 
-    delete h;
+    Rcpp::print(folders_list.names());
+
+    Rcpp::StringVector files_diali = folders_list[1];
+
+    onlycpp(Rcpp::as<std::string>(files_diali[1]));
+
+    image obj(Rcpp::as<std::string>(files_diali[1]),Rcpp::as<std::string>(folders_list[1]));
+
+    obj.summary();
+
+
+
 
     return(1);
 }
 
 
-// void run()

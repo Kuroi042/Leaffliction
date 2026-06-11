@@ -22,3 +22,24 @@ int hh::neolasom()
 hh::~hh()
 {
 }
+
+
+image::image(std::string _path , std::string _marad) : path(_path), marad(_marad)
+{
+    this->myimg = cv::imread(this->path);
+}
+
+image::~image()
+{
+
+}
+
+void image::summary()
+{
+    std::cout << "this leaf have " << marad << " located in " << path << std::endl; 
+    // cv::imwrite("./miw.jpg", cv::rotate(this->myimg))
+
+    cv::imshow("Window Name", this->myimg);
+
+    cv::waitKey(0);
+}
