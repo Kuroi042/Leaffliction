@@ -6,6 +6,7 @@ args = commandArgs(trailingOnly=TRUE)
 
 # length(args)
 
+print(args[1])
 
 if(length(args) != 1)
 {

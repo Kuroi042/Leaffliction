@@ -1,14 +1,12 @@
 library(Rcpp)
-library(opencv)
+# library(opencv)
 
 
-# Sys.setenv(PKG_CXXFLAGS = "-std=c++17") linux
-# Sys.setenv(PKG_LIBS = "$(pkg-config --libs opencv4)")
-# Sys.setenv(PKG_CPPFLAGS = "$(pkg-config --cflags opencv4)")
+# check if is a folder do all this , if just a file esecute the fuction directly
 
-Sys.setenv(PKG_CXXFLAGS = "-std=c++17")
-Sys.setenv(PKG_CPPFLAGS = "-II:/ratt/opencv/build/include")
-Sys.setenv(PKG_LIBS = "-LI:/ratt/opencv/build/x64/vc16/lib -lopencv_world500")
+Sys.setenv(PKG_CXXFLAGS = paste0(system("pkg-config --cflags opencv5", intern=TRUE)))
+Sys.setenv(PKG_LIBS     = paste0(system("pkg-config --libs opencv5",   intern=TRUE)))
+
 
 
 args = commandArgs(trailingOnly=TRUE)
