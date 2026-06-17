@@ -26,7 +26,7 @@ def ft_rotate(path:str):
     img  =  cv2.imread(path)
     (h, w) = img.shape[:2]
     center = (w // 2, h // 2)
-    angle = 18 
+    angle =50
     scale = 1.0
     M = cv2.getRotationMatrix2D(center, angle, scale)
     rotated_image = cv2.warpAffine(img, M, (w, h), flags=cv2.INTER_LINEAR, borderMode=cv2.BORDER_REFLECT)

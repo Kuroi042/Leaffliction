@@ -33,7 +33,7 @@ class Transforme:
         pcv.params.debug = self.debug
         pcv.params.debug_outdir = self.outdir
 
-    
+
     def read_orginal(self):  
         self.rgb,_,_=pcv.readimage(filename=self.path, mode="native")
         if self.rgb is not None:
@@ -306,7 +306,7 @@ def Execute_filter(tools:handytools):
     leaf.mask_filter()
     leaf.Roi()
     leaf.analyze_object()
-    # leaf.display()
+    leaf.display()
 
 
 def main():
