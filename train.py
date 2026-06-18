@@ -15,7 +15,7 @@ EPOCHS      = 10
 SEED        = 42
 
 def load_datasets(data_dir):
-        train_ds = tf.keras.utils.image_dataset_from_directory(
+    train_ds = tf.keras.utils.image_dataset_from_directory(
         data_dir,
         validation_split=0.2,
         subset="training",
@@ -24,26 +24,25 @@ def load_datasets(data_dir):
         batch_size=BATCH_SIZE,
         label_mode="categorical",
     )
- 
-        val_ds = tf.keras.utils.image_dataset_from_directory(
-            data_dir,
-            validation_split=0.2,
-            subset="validation",
-            seed=SEED,
-            image_size=IMG_SIZE,
-            batch_size=BATCH_SIZE,
-            label_mode="categorical",
-        )
-    
-        class_names = train_ds.class_names
-        print(f"\n✅ Classes found ({len(class_names)}): {class_names}\n")
-    
-        # Performance optimization: cache and prefetch
-        AUTOTUNE = tf.data.AUTOTUNE
-        train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
-        val_ds   = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
-    
-        return train_ds, val_ds, class_names
+
+    val_ds = tf.keras.utils.image_dataset_from_directory(
+        data_dir,
+        validation_split=0.2,
+        subset="validation",
+        seed=SEED,
+        image_size=IMG_SIZE,
+        batch_size=BATCH_SIZE,
+        label_mode="categorical",
+    )
+
+    class_names = train_ds.class_names
+    print(f"\n✅ Classes found ({len(class_names)}): {class_names}\n")
+
+    AUTOTUNE = tf.data.AUTOTUNE
+    train_ds = train_ds.cache().shuffle(1000).prefetch(buffer_size=AUTOTUNE)
+    val_ds   = val_ds.cache().prefetch(buffer_size=AUTOTUNE)
+
+    return train_ds, val_ds, class_names
 
 def build_model(num_classes):
     preprocess = tf.keras.applications.mobilenet_v2.preprocess_input
@@ -53,36 +52,27 @@ def build_model(num_classes):
         include_top=False,
         weights="imagenet",
     )
-
     base_model.trainable = False
 
     inputs = tf.keras.Input(shape=(*IMG_SIZE, 3))
-
     x = preprocess(inputs)
     x = base_model(x, training=False)
-
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(128, activation="relu")(x)
     x = layers.Dropout(0.3)(x)
-
     outputs = layers.Dense(num_classes, activation="softmax")(x)
 
     model = models.Model(inputs, outputs)
-
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
-
     model.summary()
-
     return model, base_model
 
 def fine_tune(model, base_model, train_ds, val_ds, unfreeze_from=100):
-
     print("\n🔧 Starting fine-tuning...\n")
-
     base_model.trainable = True
 
     for layer in base_model.layers[:-unfreeze_from]:
@@ -109,23 +99,19 @@ def fine_tune(model, base_model, train_ds, val_ds, unfreeze_from=100):
     )
 
 def save_results(model, class_names, output_zip="model.zip"):
-    """Save model + class names into a zip file (as required by subject)."""
     os.makedirs("model_output", exist_ok=True)
- 
     model_path = "model_output/model.keras"
     model.save(model_path)
- 
+
     classes_path = "model_output/class_names.json"
     with open(classes_path, "w") as f:
         json.dump(class_names, f)
- 
+
     with zipfile.ZipFile(output_zip, "w") as zf:
         zf.write(model_path, arcname="model.keras")
         zf.write(classes_path, arcname="class_names.json")
- 
 
 def evaluate(model, val_ds, class_names):
-    """Print final validation accuracy."""
     loss, acc = model.evaluate(val_ds, verbose=0)
     print(f"\n📊 Validation Accuracy : {acc * 100:.2f}%")
     print(f"📊 Validation Loss     : {loss:.4f}")
@@ -137,23 +123,21 @@ def evaluate(model, val_ds, class_names):
 def main():
     if len(sys.argv) < 2:
         print("Usage: python train.py <dataset_directory>")
-        print("Example: python train.py ./Apple/")
         sys.exit(1)
- 
+
     data_dir = sys.argv[1]
     if not os.path.isdir(data_dir):
         print(f"Error: '{data_dir}' is not a valid directory.")
         sys.exit(1)
- 
+
     print(f"\n📂 Loading dataset from: {data_dir}")
     train_ds, val_ds, class_names = load_datasets(data_dir)
- 
+
     num_classes = len(class_names)
     print(f"\n🏗️  Building model for {num_classes} classes...")
     model, base_model = build_model(num_classes)
-    os.makedirs("model_output", exist_ok=True)   # ← add this line
+    os.makedirs("model_output", exist_ok=True)
 
-    # ── Phase 1: Train only the head ─────────────────
     print("\n🚀 Phase 1: Training classification head...\n")
     model.fit(
         train_ds,
@@ -174,19 +158,11 @@ def main():
             ),
         ],
     )
- 
-    # ── Phase 2: Fine-tune top layers ────────────────
-    fine_tune(
-    model,
-    base_model,
-    train_ds,
-    val_ds,
-    unfreeze_from=50
-) 
-    # ── Evaluate & Save ───────────────────────────────
+
+    fine_tune(model, base_model, train_ds, val_ds, unfreeze_from=50)
+
     evaluate(model, val_ds, class_names)
     save_results(model, class_names, output_zip="model.zip")
- 
- 
+
 if __name__ == "__main__":
     main()
