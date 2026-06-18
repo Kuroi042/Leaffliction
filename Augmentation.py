@@ -9,17 +9,12 @@ import matplotlib.pyplot as plt
 
 
 
-def Name_Maker(path:str , func:str):
-    path2 =  Path(*path.parts[:2])
-    name  =  str(path).split("/")[2]    
-    slimame = name.split('.')[0]
-    ext =  name.split('.')[1]
-    # print(slimame,ext)
-    # print(slimame ,'+' ,ext)
-    save_path =  os.path.join(path2, slimame+func+'.'+ext)
+def Name_Maker(path, func: str):
+    path = Path(path)
+    save_path = path.parent / f"{path.stem}{func}{path.suffix}"
     print(f"Saving {func} Done !!!")
+    return str(save_path)
 
-    return save_path
 
 
 def ft_rotate(path:str):

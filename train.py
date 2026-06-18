@@ -11,7 +11,7 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 #config
 IMG_SIZE    = (224, 224)
 BATCH_SIZE  = 32
-EPOCHS      = 30
+EPOCHS      = 10
 SEED        = 42
 
 def load_datasets(data_dir):
@@ -46,67 +46,67 @@ def load_datasets(data_dir):
         return train_ds, val_ds, class_names
 
 def build_model(num_classes):
-    """
-    Transfer learning with MobileNetV2 pretrained on ImageNet.
-    We freeze the base and only train the classification head.
-    """
-    # Normalization layer (scales pixels 0-255 → 0-1 expected by MobileNetV2)
     preprocess = tf.keras.applications.mobilenet_v2.preprocess_input
- 
+
     base_model = MobileNetV2(
         input_shape=(*IMG_SIZE, 3),
-        include_top=False,   # remove ImageNet classifier
+        include_top=False,
         weights="imagenet",
     )
-    base_model.trainable = False  # freeze pretrained weights
- 
+
+    base_model.trainable = False
+
     inputs = tf.keras.Input(shape=(*IMG_SIZE, 3))
-    x = preprocess(inputs)           # normalize
+
+    x = preprocess(inputs)
     x = base_model(x, training=False)
+
     x = layers.GlobalAveragePooling2D()(x)
     x = layers.Dense(128, activation="relu")(x)
     x = layers.Dropout(0.3)(x)
+
     outputs = layers.Dense(num_classes, activation="softmax")(x)
- 
+
     model = models.Model(inputs, outputs)
- 
+
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-3),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
- 
-    model.summary()
-    return model
 
-def fine_tune(model, train_ds, val_ds, unfreeze_from=100):
-    """
-    Optional second training phase: unfreeze top layers of base model
-    for fine-tuning with a very low learning rate.
-    """
-    base_model = model.layers[3]  # MobileNetV2 layer
+    model.summary()
+
+    return model, base_model
+
+def fine_tune(model, base_model, train_ds, val_ds, unfreeze_from=100):
+
+    print("\n🔧 Starting fine-tuning...\n")
+
     base_model.trainable = True
- 
-    # Freeze all layers except the top `unfreeze_from`
+
     for layer in base_model.layers[:-unfreeze_from]:
         layer.trainable = False
- 
+
     model.compile(
         optimizer=tf.keras.optimizers.Adam(learning_rate=1e-5),
         loss="categorical_crossentropy",
         metrics=["accuracy"],
     )
- 
-    print("\n🔧 Fine-tuning top layers...\n")
-    history = model.fit(
+
+    model.fit(
         train_ds,
         validation_data=val_ds,
         epochs=10,
         callbacks=[
-            EarlyStopping(monitor="val_accuracy", patience=5, restore_best_weights=True),
+            EarlyStopping(
+                monitor="val_accuracy",
+                patience=5,
+                restore_best_weights=True,
+                verbose=1,
+            )
         ],
     )
-    return history
 
 def save_results(model, class_names, output_zip="model.zip"):
     """Save model + class names into a zip file (as required by subject)."""
@@ -150,8 +150,9 @@ def main():
  
     num_classes = len(class_names)
     print(f"\n🏗️  Building model for {num_classes} classes...")
-    model = build_model(num_classes)
- 
+    model, base_model = build_model(num_classes)
+    os.makedirs("model_output", exist_ok=True)   # ← add this line
+
     # ── Phase 1: Train only the head ─────────────────
     print("\n🚀 Phase 1: Training classification head...\n")
     model.fit(
@@ -175,8 +176,13 @@ def main():
     )
  
     # ── Phase 2: Fine-tune top layers ────────────────
-    fine_tune(model, train_ds, val_ds)
- 
+    fine_tune(
+    model,
+    base_model,
+    train_ds,
+    val_ds,
+    unfreeze_from=50
+) 
     # ── Evaluate & Save ───────────────────────────────
     evaluate(model, val_ds, class_names)
     save_results(model, class_names, output_zip="model.zip")
