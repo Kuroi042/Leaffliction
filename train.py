@@ -11,14 +11,24 @@ from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 #config
 IMG_SIZE    = (224, 224)
 BATCH_SIZE  = 32
-EPOCHS      = 10
+EPOCHS      =40
 SEED        = 42
 
 def load_datasets(data_dir):
+    # data_dir should be the Balanced/ folder
+    # we automatically look inside train/ and val/
+    train_dir = os.path.join(data_dir, "train")
+    val_dir   = os.path.join(data_dir, "val")
+
+    # sanity check
+    if not os.path.isdir(train_dir) or not os.path.isdir(val_dir):
+        print(f"Error: expected {train_dir} and {val_dir} to exist.")
+        print("Make sure you point train.py at the Balanced/ folder,")
+        print("which should contain train/ and val/ subfolders.")
+        sys.exit(1)
+
     train_ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        validation_split=0.2,
-        subset="training",
+        train_dir,
         seed=SEED,
         image_size=IMG_SIZE,
         batch_size=BATCH_SIZE,
@@ -26,9 +36,7 @@ def load_datasets(data_dir):
     )
 
     val_ds = tf.keras.utils.image_dataset_from_directory(
-        data_dir,
-        validation_split=0.2,
-        subset="validation",
+        val_dir,
         seed=SEED,
         image_size=IMG_SIZE,
         batch_size=BATCH_SIZE,
