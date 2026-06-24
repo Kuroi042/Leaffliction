@@ -1,5 +1,6 @@
 library(ggplot2)
 library(patchwork)
+library(sfsmisc)
 
 
 args = commandArgs(trailingOnly=TRUE)
@@ -22,11 +23,11 @@ file_list <- list()
 
 for( i in dir_list)
 {
-    print( basename(i) )
+    # print( basename(i) )
     folder_name <- basename(i)
     files <- list.files(path = i)
     file_list[[folder_name]] <- files
-    cat( "in the folder ", i ," found ", length(files) , "\n")
+    # cat( "in the folder ", i ," found ", length(files) , "\n")
 
 }
 
@@ -45,12 +46,19 @@ total <- sum(colSums(!is.na(data)))
 datatoplot <- data.frame(classnames = colnames(data) , count = colSums(!is.na(data)) , percent = round((colSums(!is.na(data))/total) *100,digits = 2)  ,stringsAsFactors = FALSE)
 rownames(datatoplot) <- NULL
 
+for(i in datatoplot$count)
+{
+    # print(i)
+    # stop()
+    print(factorize(i))
+}
+
 # datatoplot$classnames <- 
 
 
 # datatoplot$count <- colSums(!is.na(data))
 
-print(datatoplot)
+# print(datatoplot)
 
 
 

@@ -3,9 +3,16 @@
 #include <Rcpp.h>
 #include <string>
 #include <typeinfo>
+#include <vector>
+#include <map>
+#include <random>
+#include <variant>
+#include <algorithm>
+
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/geometry/2d.hpp>
+#include <opencv2/core/mat.hpp>
 
 using namespace Rcpp;
 
@@ -34,24 +41,52 @@ class image
     cv::Mat myimg;
     cv::Mat modified;
     std::vector<cv::Mat>allimages;
-
-    //tswora
+    cv::Mat combined;
+    std::vector<std::function<void()>> transformations;
+    int width;
+    int height;
+    
+    static std::mt19937 &get_rng();
     public:
+    enum augment
+    {
+        rotation,
+        blur,
+        brightness,
+        scale,
+        flip,
+        zoom,
+        shear,
+        translate,
+        noise
+    };
     image(std::string _path , std::string _marad);
     ~image();
+    // using params = std::variant<int,float,double>;
+    typedef std::variant<int,float,double> params;
+
     void summary();
     void saveimg(std::string path);
     void ft_rotation(int degree);
-    void ft_blur(int sigmaX , int sigmaY );
+    void ft_blur(float sigma );
     void ft_brightness(float degree);
     void ft_scale(float size);
     void ft_flip(int direction);
     void ft_zoom(float height);
+    void ft_shear(float right, float down);
+    void ft_translate(int dx, int dy);
+    void ft_noise(double stddev);
 
 
-    // std::string ft_crop(int degree);
-    // std::string ft_crop(int degree);
-    // std::string ft_crop(int degree);
+    image::params ft_randomize(image::augment what);
+
+    void ft_finalize();
+
+    void ft_selection();
+
+    void init();
+
+
 
 
 

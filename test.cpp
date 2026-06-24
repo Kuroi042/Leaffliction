@@ -42,14 +42,63 @@ int cppmain(std::string fromR , Rcpp::List folders_list)
 
     image obj(filename,foldername);
 
-    // obj.ft_rotation(-30);
-    // obj.ft_blur(15,5);
-    // obj.ft_scale(4.0f);
-    // obj.saveimg(filename);
-    // obj.ft_flip(HORIZONTAL_FLIP);
-    // obj.ft_zoom(2.2f);
-    obj.ft_brightness(0.3f);
 
+    // obj.ft_noise(15);
+    // obj.ft_rotation(-30);
+    // obj.ft_blur(2.0);
+    // obj.ft_scale(0.7f);
+    // obj.ft_scale(1.7f);
+    // obj.ft_scale(0.2f);
+
+    // obj.ft_flip(VERTICAL_FLIP);
+    // obj.ft_zoom(0.8f); 
+    // obj.ft_brightness(0.3f);
+
+    // obj.ft_shear(std::get<float>(obj.ft_randomize(image::augment::shear)),std::get<float>(obj.ft_randomize(image::augment::shear)));
+    // obj.ft_shear(std::get<float>(obj.ft_randomize(image::augment::shear)),std::get<float>(obj.ft_randomize(image::augment::shear)));
+    // obj.ft_shear(std::get<float>(obj.ft_randomize(image::augment::shear)),std::get<float>(obj.ft_randomize(image::augment::shear)));
+    // obj.ft_shear(std::get<float>(obj.ft_randomize(image::augment::shear)),std::get<float>(obj.ft_randomize(image::augment::shear)));
+    // obj.ft_shear(std::get<float>(obj.ft_randomize(image::augment::shear)),std::get<float>(obj.ft_randomize(image::augment::shear)));
+    // obj.ft_shear(std::get<float>(obj.ft_randomize(image::augment::shear)),std::get<float>(obj.ft_randomize(image::augment::shear)));
+    
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+    // obj.ft_flip(std::get<int>(obj.ft_randomize(image::augment::flip)));
+
+
+    // obj.ft_selection();
+    // obj.ft_selection();
+    // obj.ft_selection();
+    // obj.ft_selection();
+
+
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    // obj.ft_rotation(std::get<int>(obj.ft_randomize(image::augment::rotation)));
+    
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize(image::augment::shear),obj.ft_randomize(image::augment::shear));
+    // obj.ft_shear(obj.ft_randomize("shear"),obj.ft_randomize("shear"));
+    // obj.ft_shear(obj.ft_randomize("shear"),obj.ft_randomize("shear"));
+    // obj.ft_shear(obj.ft_randomize("shear"),obj.ft_randomize("shear"));
+    // obj.ft_shear(obj.ft_randomize("shear"),obj.ft_randomize("shear"));
+    // obj.ft_shear(obj.ft_randomize("shear"),obj.ft_randomize("shear"));
+
+    // obj.saveimg(filename);
+    obj.ft_selection();
     obj.summary();
 
     
