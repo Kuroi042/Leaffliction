@@ -32,7 +32,7 @@ int main()
     int c = 275 ;
     int d = 629 ;
 
-    int ints[] =  {a , b,c,d};
+    int ints[] =  {a*0.80 , b*0.80,c*0.80,d*0.80};
     int needed = 0;
 
     

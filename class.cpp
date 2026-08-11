@@ -19,11 +19,12 @@ hh::~hh()
 {
 }
 
-image::image(std::string _path, std::string _marad) : path(_path), marad(_marad)
+image::image(std::string _path, std::string _marad,int count) : path(_path), marad(_marad) , remaining(count)
 {
     this->myimg = cv::imread(this->path);
     this->width = this->myimg.rows;
     this->height = this->myimg.cols;
+    std::cout << "created " << this->remaining << std::endl; 
     init();
 }
 
@@ -55,13 +56,21 @@ void image::saveimg(std::string path)
 {
 
     std::string newpath;
+    std::string ext;
+    std::string filename;
 
-    std::string ext = path.substr(path.rfind('.'));
-    std::string filename = path.substr(0, path.rfind('.'));
+    ext = path.substr(path.rfind('.'));
+    filename = path.substr(0, path.rfind('.'));
 
-    newpath = filename + "_" + this->aug + ext;
+    for (std::vector<std::pair<cv::Mat , std::string>>::iterator it = this->mapimages.begin(); it != this->mapimages.end() ; ++it)
+    { // hna
+        newpath = filename + "_" + it->second + ext;
+        cv::imwrite(newpath, it->first);
+        /* code */
+    }
+    
 
-    cv::imwrite(newpath, this->modified);
+
 }
 
 void image::ft_rotation(int degree)
@@ -70,6 +79,8 @@ void image::ft_rotation(int degree)
     cv::Mat matrix = cv::getRotationMatrix2D(center, degree, 1.0);
     cv::warpAffine(this->myimg, this->modified, matrix, this->myimg.size(), 0, 2);
     this->allimages.push_back(this->modified.clone());
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"Rotation"));
+
 
     this->aug = "Rotation";
 }
@@ -80,6 +91,8 @@ void image::ft_blur(float sigma)
 
     cv::GaussianBlur(this->myimg, this->modified, cv::Size(0, 0), sigma, sigma);
     this->allimages.push_back(this->modified.clone());
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"blur"));
+
 
     this->aug = "blur";
 }
@@ -90,6 +103,8 @@ void image::ft_scale(float size)
     cv::resize(this->myimg, scaled, cv::Size(0, 0), size, size);
     cv::resize(scaled, this->modified, cv::Size(this->width, this->height));
     this->allimages.push_back(this->modified.clone());
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"Scale"));
+
 
     this->aug = "Scale";
 }
@@ -98,6 +113,7 @@ void image::ft_flip(int direction)
 {
     cv::flip(this->myimg, this->modified, direction);
     this->allimages.push_back(this->modified.clone());
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"flip"));
 
     this->aug = "flip";
 
@@ -130,6 +146,8 @@ void image::ft_zoom(float height)
 
     cv::resize(cropped, this->modified, cv::Size(orig_w, orig_h));
     this->allimages.push_back(this->modified.clone());
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"Zoom"));
+
 
     this->aug = "Zoom";
 }
@@ -138,6 +156,8 @@ void image::ft_brightness(float degree)
 {
     this->myimg.convertTo(this->modified, -1, degree, 0);
     this->allimages.push_back(this->modified.clone());
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"Brightness"));
+
 
     this->aug = "Brightness";
 }
@@ -154,7 +174,9 @@ void image::ft_shear(float right, float down)
 
     cv::warpAffine(this->myimg, this->modified, shear_matrix, cv::Size(new_w, new_h), 0, 2);
     this->allimages.push_back(this->modified.clone());
-    this->aug = "Shear";
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"Shear"));
+
+    // this->aug = "Shear";
 }
 void image::ft_noise(double stddev)
 {
@@ -162,7 +184,9 @@ void image::ft_noise(double stddev)
     cv::randn(noise, 0, stddev);
     this->modified = this->myimg + noise;
     this->allimages.push_back(this->modified.clone());
-    this->aug = "noise";
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"noise"));
+
+    // this->aug = ;
 }
 
 void image::ft_translate(int dx, int dy)
@@ -170,7 +194,9 @@ void image::ft_translate(int dx, int dy)
     cv::Mat t = (cv::Mat_<float>(2, 3) << 1, 0, dx, 0, 1, dy);
     cv::warpAffine(this->myimg, this->modified, t, this->myimg.size(),0,2);
     this->allimages.push_back(this->modified.clone());
-    this->aug = "translate";
+    this->mapimages.push_back(std::pair<cv::Mat , std::string>(this->modified.clone(),"translate"));
+
+    // this->aug = ;
 }
 
 image::params image::ft_randomize(image::augment what)
@@ -244,7 +270,7 @@ void image::ft_finalize()
 void image::ft_selection()
 {
     
-    std::uniform_int_distribution<int> selection(0, 3);
+    // std::uniform_int_distribution<int> selection(0, 3);
 
     int needed; // ppcm
     std::shuffle(this->transformations.begin(),this->transformations.end(),get_rng());
@@ -253,6 +279,8 @@ void image::ft_selection()
     {
         this->transformations[i]();
     }
+
+    saveimg(this->path);
     
 
     // this->transformations[0]();

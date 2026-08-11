@@ -37,10 +37,12 @@ class image
     std::string path;
     std::string marad;
     std::string aug;
+    int remaining;
 
     cv::Mat myimg;
     cv::Mat modified;
     std::vector<cv::Mat>allimages;
+    std::vector<std::pair<cv::Mat , std::string>>mapimages;
     cv::Mat combined;
     std::vector<std::function<void()>> transformations;
     int width;
@@ -60,7 +62,7 @@ class image
         translate,
         noise
     };
-    image(std::string _path , std::string _marad);
+    image(std::string _path , std::string _marad,int count);
     ~image();
     // using params = std::variant<int,float,double>;
     typedef std::variant<int,float,double> params;

@@ -18,29 +18,53 @@ int onlycpp(std::string towrite)
 
 
 // [[Rcpp::export]]
-int cppmain(std::string fromR , Rcpp::List folders_list)
+int cppmain(Rcpp::IntegerVector fromR , Rcpp::List folders_list)
 {
 
+    // std::cout << folders_list[0].names() << std::endl;
+    // Rcpp::print(folders_list.names());
+    // exit(0);
+    CharacterVector R = fromR.names();
 
-    Rcpp::print(folders_list.names());
 
+    for (int i = 0; i < fromR.size(); i++)
+    {
+        std::cout << R[i] << " " << fromR[i] << std::endl;
+        /* code */
+    }
+    
+    
     Rcpp::StringVector files_diali = folders_list[0];
 
+    // std::cout  <<  folders_list[0];
+    
     Rcpp::StringVector folders_diali = folders_list.names();
+    
+    // for (int i = 0; i < folders_diali.size(); i++)
+    // {
 
-
+    //     for (int j = 0; j < files_diali.size(); j++)
+    //     {
+    //         std::cout << files_diali[j] << std::endl;
+    //     }
+        
+    // }
+    
+    
     // onlycpp(Rcpp::as<std::string>(files_diali[1]));
-
+    
     std::string foldername = Rcpp::as<std::string>(folders_diali[0]);
     std::string filename = Rcpp::as<std::string>(files_diali[3]);
-
+    int count = fromR[0]; 
+    
     onlycpp(foldername);
     onlycpp(filename);
+    std::cout << count << std::endl;
 
 
     // cv::Mat myimg = cv::imread(files_diali[1]);
 
-    image obj(filename,foldername);
+    image obj(filename,foldername,count);
 
 
     // obj.ft_noise(15);

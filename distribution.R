@@ -46,19 +46,19 @@ total <- sum(colSums(!is.na(data)))
 datatoplot <- data.frame(classnames = colnames(data) , count = colSums(!is.na(data)) , percent = round((colSums(!is.na(data))/total) *100,digits = 2)  ,stringsAsFactors = FALSE)
 rownames(datatoplot) <- NULL
 
-for(i in datatoplot$count)
-{
-    # print(i)
-    # stop()
-    print(factorize(i))
-}
+# for(i in datatoplot$count)
+# {
+#     # print(i)
+#     # stop()
+#     print(factorize(i))
+# }
 
 # datatoplot$classnames <- 
 
 
 # datatoplot$count <- colSums(!is.na(data))
 
-# print(datatoplot)
+print(datatoplot)
 
 
 
