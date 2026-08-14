@@ -32,7 +32,7 @@ for( i in dir_list)
     
     
 }
-#  max_len <- max(lengths(file_list))
+ target <- max(lengths(file_list))
 # hh <- as.data.frame(file_list)
 
 # print(datatoplot)
@@ -41,9 +41,10 @@ datatoplot <- data.frame(classnames = names(file_list) , count = max_len , strin
 rownames(datatoplot) <- NULL
 print(datatoplot)
 print(max_len)
+stop()
 
 sourceCpp("test.cpp")
 
-cppmain(max_len,file_list)
+cppmain(max_len,file_list,target)
 
 

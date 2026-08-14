@@ -61,7 +61,6 @@ void image::saveimg(std::string path)
 
     ext = path.substr(path.rfind('.'));
     filename = path.substr(0, path.rfind('.'));
-
     for (std::vector<std::pair<cv::Mat , std::string>>::iterator it = this->mapimages.begin(); it != this->mapimages.end() ; ++it)
     { // hna
         newpath = filename + "_" + it->second + ext;
@@ -272,10 +271,10 @@ void image::ft_selection()
     
     // std::uniform_int_distribution<int> selection(0, 3);
 
-    int needed; // ppcm
+    // int needed ; // ppcm
     std::shuffle(this->transformations.begin(),this->transformations.end(),get_rng());
 
-    for (int i = 0; i < 5; i++)
+    for (int i = 0; i < this->remaining; i++)
     {
         this->transformations[i]();
     }
@@ -294,8 +293,8 @@ void image::ft_selection()
 
 void image::init()
 {
-    transformations.push_back([this]()
-                              { ft_flip(std::get<int>(ft_randomize(augment::flip))); });
+    // transformations.push_back([this]()
+    //                           { ft_flip(std::get<int>(ft_randomize(augment::flip))); });
     transformations.push_back([this]()
                               { ft_rotation(std::get<int>(ft_randomize(augment::rotation))); });
     transformations.push_back([this]()

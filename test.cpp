@@ -15,56 +15,94 @@ int onlycpp(std::string towrite)
     return(0);
 }
 
+int needed_aug(int real , int target)
+{
+    int aug_number = 0;
+    int needed = target - real ; 
+    int distribution  = needed / real;
+    int chyata = needed % real;
+    for (int i = 0; i < chyata; i++)
+    {
+        aug_number++;
+        break;
+    }
+    
+
+
+    return(aug_number);
+}
+
 
 
 // [[Rcpp::export]]
-int cppmain(Rcpp::IntegerVector fromR , Rcpp::List folders_list)
+int cppmain(Rcpp::IntegerVector fromR , Rcpp::List folders_list, int target)
 {
 
-    // std::cout << folders_list[0].names() << std::endl;
-    // Rcpp::print(folders_list.names());
-    // exit(0);
+
     CharacterVector R = fromR.names();
-
-
-    for (int i = 0; i < fromR.size(); i++)
-    {
-        std::cout << R[i] << " " << fromR[i] << std::endl;
-        /* code */
-    }
-    
-    
-    Rcpp::StringVector files_diali = folders_list[0];
-
-    // std::cout  <<  folders_list[0];
-    
     Rcpp::StringVector folders_diali = folders_list.names();
-    
-    // for (int i = 0; i < folders_diali.size(); i++)
-    // {
+    Rcpp::StringVector files_diali;
+    std::string foldername;
+    std::string filename;
 
-    //     for (int j = 0; j < files_diali.size(); j++)
-    //     {
-    //         std::cout << files_diali[j] << std::endl;
-    //     }
+    for (int i = 0; i < R.size(); i++) // folder number
+    {
+        files_diali = folders_list[i];
+        int real_count = fromR[i];
+        // int test = needed_aug(fromR[i] , target);
+        int needed = target - real_count;
+        int distribution = needed / real_count; // Base per file
+        int chyata = needed % real_count;       // Leftovers needing +1
+        // std::vector<int> file_aug_counts(real_count, distribution);
+        // for (int k = 0; k < chyata; ++k) {
+            //     file_aug_counts[k] += 1;
+            // }
+            
+            foldername = Rcpp::as<std::string>(folders_diali[i]);
+            
+            
+            for (int j = 0; j < files_diali.size(); j++)
+            {
+            int to_aug = distribution;
+            if (chyata > 0 )
+            {
+                to_aug += 1;
+                chyata--;
+            }
+            
+            filename = Rcpp::as<std::string>(files_diali[j]);
+            // int file_aug_target = file_aug_counts[j];
+            // std::cout << "target: " << test << " folder : "    << foldername << "file :" << filename << "count dialhom = " << fromR[i] << std::endl;
+            // std::cout << "Folder: " << foldername 
+            // << " | File: " << filename 
+            // << " | Real total: " << real_count 
+            // << " | Augmentations to make: " << to_aug
+            // << std::endl;
+            if (to_aug > 0)
+            {
+                image obj(filename,foldername,to_aug);
+                obj.ft_selection();
+
+                /* code */
+            }
+            
+
+
+        }
         
-    // }
+
+
+
+
+    }
+    // exit(0);
     
-    
-    // onlycpp(Rcpp::as<std::string>(files_diali[1]));
-    
-    std::string foldername = Rcpp::as<std::string>(folders_diali[0]);
-    std::string filename = Rcpp::as<std::string>(files_diali[3]);
+
     int count = fromR[0]; 
     
-    onlycpp(foldername);
-    onlycpp(filename);
-    std::cout << count << std::endl;
+    // onlycpp(foldername);
+    // onlycpp(filename);
 
-
-    // cv::Mat myimg = cv::imread(files_diali[1]);
-
-    image obj(filename,foldername,count);
 
 
     // obj.ft_noise(15);
@@ -122,8 +160,8 @@ int cppmain(Rcpp::IntegerVector fromR , Rcpp::List folders_list)
     // obj.ft_shear(obj.ft_randomize("shear"),obj.ft_randomize("shear"));
 
     // obj.saveimg(filename);
-    obj.ft_selection();
-    obj.summary();
+    // obj.ft_selection();
+    // obj.summary();
 
     
 
