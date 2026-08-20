@@ -44,7 +44,7 @@ class image
     std::vector<cv::Mat>allimages;
     std::vector<std::pair<cv::Mat , std::string>>mapimages;
     cv::Mat combined;
-    std::vector<std::function<void()>> transformations;
+    std::vector<std::function<void(bool)>> transformations;
     int width;
     int height;
     
@@ -60,7 +60,8 @@ class image
         zoom,
         shear,
         translate,
-        noise
+        noise,
+        distort
     };
     image(std::string _path , std::string _marad,int count);
     ~image();
@@ -78,13 +79,14 @@ class image
     void ft_shear(float right, float down);
     void ft_translate(int dx, int dy);
     void ft_noise(double stddev);
+    void ft_distort(float strength);
 
 
     image::params ft_randomize(image::augment what);
 
     void ft_finalize();
 
-    void ft_selection();
+    void ft_selection(int type);
 
     void init();
 

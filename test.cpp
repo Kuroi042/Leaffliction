@@ -15,22 +15,6 @@ int onlycpp(std::string towrite)
     return(0);
 }
 
-int needed_aug(int real , int target)
-{
-    int aug_number = 0;
-    int needed = target - real ; 
-    int distribution  = needed / real;
-    int chyata = needed % real;
-    for (int i = 0; i < chyata; i++)
-    {
-        aug_number++;
-        break;
-    }
-    
-
-
-    return(aug_number);
-}
 
 
 
@@ -41,9 +25,22 @@ int cppmain(Rcpp::IntegerVector fromR , Rcpp::List folders_list, int target)
 
     CharacterVector R = fromR.names();
     Rcpp::StringVector folders_diali = folders_list.names();
-    Rcpp::StringVector files_diali;
+    Rcpp::StringVector files_diali = folders_list[0];
     std::string foldername;
     std::string filename;
+
+    if (R.size() == 1 && files_diali.size() == 1 )
+    {
+        /* code */
+            foldername = Rcpp::as<std::string>(folders_diali[0]);
+            filename = Rcpp::as<std::string>(files_diali[0]);
+
+       image obj(filename,foldername,1);
+                obj.ft_selection(0);
+                obj.summary();
+    }
+    
+
 
     for (int i = 0; i < R.size(); i++) // folder number
     {
@@ -81,7 +78,7 @@ int cppmain(Rcpp::IntegerVector fromR , Rcpp::List folders_list, int target)
             if (to_aug > 0)
             {
                 image obj(filename,foldername,to_aug);
-                obj.ft_selection();
+                obj.ft_selection(1);
 
                 /* code */
             }

@@ -16,32 +16,38 @@ if(length(args) != 1)
 {
     stop("error in arguments")
 }
+input_path <- args[1]
 
 
 
-dir_list <- list.dirs(path = args ,recursive = FALSE)
+dir_list <- list.dirs(path = input_path ,recursive = FALSE)
 
 
 file_list <- list()
 
-for( i in dir_list)
-{
-    folder_name <- basename(i)
-    files <- list.files(path = i, full.names = TRUE) #, full.names = TRUE bach i3ti absolute path
-    file_list[[folder_name]] <- files
+ class_name <- basename(dirname(input_path))
+  file_list[[class_name]] <- input_path
+
+# for( i in dir_list)
+# {
+#     folder_name <- basename(i)
+#     files <- list.files(path = i, full.names = TRUE) #, full.names = TRUE bach i3ti absolute path
+#     file_list[[folder_name]] <- files
     
     
-}
- target <- max(lengths(file_list))
+# }
+
+
 # hh <- as.data.frame(file_list)
 
 # print(datatoplot)
 max_len <- lengths(file_list)
+ target <- max(max_len)
 datatoplot <- data.frame(classnames = names(file_list) , count = max_len , stringsAsFactors = FALSE)
 rownames(datatoplot) <- NULL
 print(datatoplot)
 print(max_len)
-stop()
+# stop()
 
 sourceCpp("test.cpp")
 
