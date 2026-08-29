@@ -1,30 +1,14 @@
 #include "class.hpp"
 
-hh::hh(int _a, int _b) : a(_a), b(_b)
-{
-    // std::cout << "created" << std::endl;
-}
-
-int hh::lasom(int a, int b)
-{
-    return (a + b);
-}
-
-int hh::neolasom()
-{
-    return (this->a + this->b);
-}
-
-hh::~hh()
-{
-}
 
 image::image(std::string _path, std::string _marad, int count) : path(_path), marad(_marad), remaining(count)
 {
+    // std::cout << this->path << std::endl;
+    // exit(1);
     this->myimg = cv::imread(this->path);
     this->width = this->myimg.rows;
     this->height = this->myimg.cols;
-    std::cout << "created " << this->remaining << std::endl;
+    // std::cout << "created " << this->remaining << std::endl;
     init();
 }
 
@@ -34,7 +18,7 @@ image::~image()
 
 void image::summary()
 {
-    std::cout << "this leaf have " << marad << " located in " << path << std::endl;
+    // std::cout << "this leaf have " << marad << " located in " << path << std::endl;
     std::cout << "size: " << this->allimages.size() << std::endl;
     ft_finalize();
     //     for (size_t i = 0; i < this->allimages.size(); ++i) {
@@ -47,10 +31,37 @@ void image::summary()
     // }
 
     cv::hconcat(this->allimages, this->combined);
-    cv::imshow("Window Name", this->combined);
+    cv::imshow("Augments", this->combined);
 
     cv::waitKey(0);
 }
+
+static std::string ft_dest_path(const std::string &path)
+{
+    std::string output("augmented_directory");
+    std::string outpath = path;
+    size_t slash = outpath.find('/');
+    if (slash != std::string::npos)
+        outpath.replace(0, slash, output);
+    else
+        outpath = output + "/" + outpath;
+
+    std::filesystem::path dir = std::filesystem::path(outpath).parent_path();
+    if (!dir.empty())
+    {
+        std::filesystem::create_directories(dir);
+    }
+    return outpath;
+}
+void image::copy_original(std::string path)
+{
+    std::string outpath = ft_dest_path(path);
+
+
+    std::filesystem::copy_file(path, outpath, std::filesystem::copy_options::overwrite_existing);
+   
+}
+
 
 void image::saveimg(std::string path)
 {
@@ -58,9 +69,26 @@ void image::saveimg(std::string path)
     std::string newpath;
     std::string ext;
     std::string filename;
+    std::string output("augmented_directory");
 
-    ext = path.substr(path.rfind('.'));
-    filename = path.substr(0, path.rfind('.'));
+    std::string outpath = path;
+    size_t slash = outpath.find('/');
+    if (slash != std::string::npos)
+        outpath.replace(0, slash, output);
+    else
+        outpath = output + "/" + outpath;
+
+    std::filesystem::path dir = std::filesystem::path(outpath).parent_path();
+    if (!dir.empty())
+    {
+        std::filesystem::create_directories(dir);
+    }
+
+    ext = outpath.substr(outpath.rfind('.'));
+    filename = outpath.substr(0, outpath.rfind('.'));
+
+    std::filesystem::copy_file(path, outpath, std::filesystem::copy_options::overwrite_existing);
+
     for (std::vector<std::pair<cv::Mat, std::string>>::iterator it = this->mapimages.begin(); it != this->mapimages.end(); ++it)
     { // hna
         newpath = filename + "_" + it->second + ext;
@@ -149,11 +177,11 @@ void image::ft_flip(int direction)
 void image::ft_zoom(float height)
 {
 
-    if (height >= 1.0)
-    {
-        std::cerr << "your zoom is not working please type a value < 1.0" << std::endl;
-        return;
-    }
+    // if (height >= 1.0)
+    // {
+    //     std::cerr << "your zoom is not working please type a value < 1.0" << std::endl;
+    //     return;
+    // }
 
     int orig_h = this->myimg.rows;
     int orig_w = this->myimg.cols;

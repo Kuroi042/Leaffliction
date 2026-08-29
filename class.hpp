@@ -8,6 +8,8 @@
 #include <random>
 #include <variant>
 #include <algorithm>
+#include <filesystem>
+
 
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc.hpp>
@@ -17,19 +19,6 @@
 using namespace Rcpp;
 
 
-class hh
-{
-private:
-    /* data */
-    int a;
-    int b;
-
-public:
-    hh(int _a , int _b);
-    ~hh();
-    int lasom(int a , int b);
-    int neolasom();
-};
 
 class image 
 {
@@ -70,6 +59,7 @@ class image
 
     void summary();
     void saveimg(std::string path);
+    static void copy_original(std::string path);
     void ft_rotation(int degree);
     void ft_blur(float sigma );
     void ft_brightness(float degree);

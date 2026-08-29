@@ -18,6 +18,14 @@ if (length(args) != 1) {
     stop("error in arguments")
 }
 input_path <- args[1]
+output_path <- "augmented_directory"
+
+
+if(dir.exists(output_path))
+{
+    unlink(output_path, recursive = TRUE)
+
+}
 
 
 dir_list <- list.dirs(path = input_path, recursive = FALSE)
