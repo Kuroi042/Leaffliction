@@ -34,4 +34,4 @@ print(max_len)
 
 sourceCpp("transformain.cpp")
 
-cppmaintranform()
+cppmaintranform(file_list)
