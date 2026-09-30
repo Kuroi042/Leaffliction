@@ -1,327 +1,330 @@
+"""Leaf image transformations for the Leaffliction project.
+
+Use one image to display the transformations:
+    python3 Transformation.py path/to/leaf.jpg
+
+Use a directory to save them without opening windows:
+    python3 Transformation.py -src path/to/leaves -dst transformed_leaves
+"""
+
+import argparse
+from pathlib import Path
+
+import cv2
 import matplotlib.pyplot as plt
-import os ,sys
-import pandas as pd
 import numpy as np
 from plantcv import plantcv as pcv
-from pathlib import Path
-import cv2
-import math
-
-class handytools:
-    def __init__(self, path,debug=None, outdir="."):
-        self.image = path
-        self.debug = debug
-        self.outdir = outdir
-        if not os.path.isdir(self.outdir):
-            os.makedirs(self.outdir)
-
-class Transforme:
-    def __init__(self, tools:handytools):
-        self.path = tools.image
-        self.debug =  tools.debug
-        self.outdir = tools.outdir
-        self.rgb =   None
-        self.max_thresh = None
-        self.blur =  None
-        self.mask =  None
-        self.filtered_mask =None
-
-        self.roi =None
-        self.mask1 = None
-        self.analyzed =  None
- 
-        pcv.params.debug = self.debug
-        pcv.params.debug_outdir = self.outdir
 
 
-    def read_orginal(self):  
-        self.rgb,_,_=pcv.readimage(filename=self.path, mode="native")
-        if self.rgb is not None:
-            print("rgb is here successfully ! ")
-        self.rgb =cv2.cvtColor(self.rgb , cv2.COLOR_BGR2RGB)
+IMAGE_SUFFIXES = {".jpg", ".jpeg", ".png", ".bmp", ".tif", ".tiff"}
+DISPLAY_SIZE = (256, 256)
+
+
+class LeafTransformer:
+    """Create visual leaf features from one input image."""
+
+    def __init__(self, path):
+        self.path = Path(path)
+        self.rgb = None
+        self.blur = None
+        self.mask = None
+        self.masked = None
+        self.roi = None
+        self.analyzed = None
+        self.landmarks = None
+        self.contour = None
+        self.centroid = None
+
+    def read_original(self):
+        """Read the input image once and keep it in RGB for matplotlib."""
+        bgr = cv2.imread(str(self.path))
+        if bgr is None:
+            raise ValueError(f"Cannot read image: {self.path}")
+        self.rgb = cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)
+        # The reference output in the subject is built on a 256 x 256 image.
+        self.rgb = cv2.resize(
+            self.rgb, DISPLAY_SIZE, interpolation=cv2.INTER_AREA
+        )
         return self.rgb
 
     def gaussian_blur(self):
+        """Create the thresholded Gaussian-blur view shown in the brief."""
         if self.rgb is None:
-            self.read_orginal()
-        gray = pcv.rgb2gray_hsv(rgb_img=self.rgb, channel="s")
-        # plt.imshow(gray)
-        blur = cv2.GaussianBlur(gray, (7, 7), 1)
-        thresh = pcv.threshold.binary(
-        gray_img=blur,
-        threshold=65, ## * low 
-        object_type="light"
+            self.read_original()
+        saturation = pcv.rgb2gray_hsv(rgb_img=self.rgb, channel="s")
+        smooth_saturation = cv2.GaussianBlur(saturation, (7, 7), 1)
+        self.blur = pcv.threshold.binary(
+            gray_img=smooth_saturation, threshold=65, object_type="light"
         )
-        self.blur = thresh
-
-        print("blur is here")
         return self.blur
 
-    def mask_filter(self):
+    def create_mask(self):
+        """Segment saturated leaf pixels, then fill small holes."""
+        if self.rgb is None:
+            self.read_original()
         if self.blur is None:
             self.gaussian_blur()
-        # thresh_blur = pcv.threshold.binary(
-        #     gray_img=self.blur,
-        #     threshold=127,
-        #     object_type="light"
-        # )
-        self.mask1 = pcv.fill(
-            bin_img=self.blur,
-            size=200
+        self.mask = pcv.fill(bin_img=self.blur, size=200)
+        self.masked = pcv.apply_mask(
+            img=self.rgb, mask=self.mask, mask_color="white"
         )
- 
-        self.mask = pcv.apply_mask(
-        img=self.rgb,
-        mask=self.mask1,
-        mask_color="white")
-        # plt.imshow(self.mask)
-        # plt.show()
         return self.mask
-    '''
-    1- rectangle covers the entire image
-    2- cleaned mask with only leaf pixels
-    3- green where leaf is, black where background is
-    4- image ready for matplotlib display
-    5- original + green overlay blended together
-    6- list of contours (leaf edges)
-    7- _largest_  the leaf contour (biggest object)
-    8- 4 numbers defining rectangle around leaf
-    9- blue rectangle drawn around the leaf
-    '''
 
-    def Roi(self):
-
-        roi =  pcv.roi.rectangle(img=self.rgb, x=0,y=0,
-                                w = self.rgb.shape[1],
-                                h=self.rgb.shape[1])
-        # *cleaned mask with only leaf pixels
-        self.filtered_mask = pcv.roi.filter(
-            mask=self.mask1,# * black and white img
-            roi=roi, # * defined rect
-            roi_type="partial"
-        )
-        # * green where leaf is, black where background is
-        colored = pcv.visualize.colorize_masks(
-            masks=[self.filtered_mask],
-            colors=["green"]
-        )
-        # * image ready for matplotlib display
-        original_rgb = cv2.cvtColor(
-        self.rgb,cv2.COLOR_BGR2RGB)
-
-        # * original + green  blended 2gether
-        blended = cv2.addWeighted(
-        original_rgb, 0.5,colored, 0.6,0)
+    def _largest_contour(self):
+        if self.mask is None:
+            self.create_mask()
         contours, _ = cv2.findContours(
-        self.filtered_mask, ## *  black/white mask to find edges in
-        cv2.RETR_EXTERNAL, ## outer cadre
-        cv2.CHAIN_APPROX_NONE ##)
+            self.mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
         )
-        largest = max(contours, key=cv2.contourArea)
-        x, y, w, h = cv2.boundingRect(largest)
-        cv2.rectangle(
-        blended,
-        (x, y),
-        (x + w, y + h),
-        (0, 0, 255), ### blue contour
-        3 
-    )
-        self.roi = blended
-        return self.roi
-    
+        if not contours:
+            return None
+        return max(contours, key=cv2.contourArea)
 
-    '''
-    find the leaf shape
-    draw its outline in pink
-    find its center point
-    draw a cross at center
-    draw inner details in blue
-    '''
+    def roi_objects(self):
+        """Show the segmented leaf and its bounding rectangle."""
+        if self.rgb is None:
+            self.read_original()
+        self.contour = self._largest_contour()
+        result = self.rgb.copy()
+        if self.contour is None:
+            self.roi = result
+            return result
+
+        overlay = pcv.visualize.colorize_masks(
+            masks=[self.mask], colors=["green"]
+        )
+        result = cv2.addWeighted(result, 0.5, overlay, 0.6, 0)
+        height, width = self.rgb.shape[:2]
+        cv2.rectangle(
+            result, (0, 0), (width - 1, height - 1), (0, 0, 255), 3
+        )
+        self.roi = result
+        return result
 
     def analyze_object(self):
-        if self.roi is None:
-            self.mask_filter()
+        """Draw the contour, convex hull, centroid, and leaf major axis."""
+        if self.contour is None:
+            self.roi_objects()
+        result = self.rgb.copy()
+        if self.contour is None:
+            self.analyzed = result
+            return result
 
-        #1: copy original image
-        analyze_img = self.rgb
-
-        #2 find inner contours for the leaf using the mask 
-        ###* list of contour point around leaf edge
-        contours, _ = cv2.findContours(
-            self.filtered_mask, ###* black and white mask 
-            cv2.RETR_EXTERNAL, ####* OUTER edges only
-            cv2.CHAIN_APPROX_SIMPLE ###* compress points to save memory len ~4
+        # The threshold image retains the leaf's internal regions. Drawing its
+        # contours in blue reproduces the secondary layer in Figure IV.5.
+        inner_contours, _ = cv2.findContours(
+            self.blur, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE
         )
-        if not contours: ##*jad3ana
-            print("no contours found!")
-            return None
-        #*3: get ONLY 1 largest contour "contour1"
-        largest = max(contours, key=cv2.contourArea)##* contoursArea get values from findcoutours
-        # step 4: draw pink outline around leaf
-        cv2.drawContours( ###* perfect contoure pink 
-            analyze_img,
-            [largest], ##* only one cntour fron max()
-            -1,
-            (0, 0, 255),  # pink/magenta
-            10
-        )
-############################################***
-        # step 5: find centroid 
-###* the average position of all pixels in the leaf shape
-##* distance of spots from center
-##* spread direction of disease
-####*
-#*Convex Hull
-#*Smooth outer perimeter of leaf
-#*Centroid    ↓
-#*Center point of leaf
-#*Vertical Axis
-#* Line passing through centroid
-#*Tip Line    ↓
-#* Line from centroid to farthest point on leaf
-        hull = cv2.convexHull(largest)
+        leaf_contours = []
+        for contour in inner_contours:
+            if cv2.contourArea(contour) < 20:
+                continue
+            moments = cv2.moments(contour)
+            if moments["m00"] == 0:
+                continue
+            x = int(moments["m10"] / moments["m00"])
+            y = int(moments["m01"] / moments["m00"])
+            if self.mask[y, x] > 0:
+                leaf_contours.append(contour)
+        cv2.drawContours(result, leaf_contours, -1, (0, 0, 255), 3)
+        hull = cv2.convexHull(self.contour)
+        cv2.drawContours(result, [hull], -1, (255, 0, 255), 5)
 
-        # Convex Hull
-        cv2.drawContours(
-            analyze_img,
-            [hull],
-            -1,
-            (255, 0, 255),
-            10
-        )
+        moments = cv2.moments(self.contour)
+        if moments["m00"] == 0:
+            self.analyzed = result
+            return result
 
-        # Centroid
-        M = cv2.moments(largest)
-        if M["m00"] != 0:
-
-            cx = int(M["m10"] / M["m00"])
-            cy = int(M["m01"] / M["m00"])
-
-            # Draw centroid
-            cv2.circle(
-                analyze_img,
-                (cx, cy),
-                10,
-                (255, 0, 255),
-                -1
-            )
-            # Vertical axis
+        cx = int(moments["m10"] / moments["m00"])
+        cy = int(moments["m01"] / moments["m00"])
+        self.centroid = (cx, cy)
+        hull_points = hull.reshape(-1, 2)
+        distances = np.linalg.norm(hull_points - np.array([cx, cy]), axis=1)
+        tip = hull_points[np.argmax(distances)]
+        direction = tip - np.array([cx, cy])
+        length = np.linalg.norm(direction)
+        if length:
+            unit = direction / length
+            projections = (hull_points - np.array([cx, cy])) @ unit
+            opposite = np.array([cx, cy]) + projections.min() * unit
             cv2.line(
-                analyze_img,
-                (cx, 0),
-                (cx, analyze_img.shape[0]),
-                (255, 0, 255),
-                5
-            )
-            # Find leaf tip
-            hull_pts = hull.reshape(-1, 2)
-
-            distances = np.sqrt(
-                (hull_pts[:, 0] - cx) ** 2 +
-                (hull_pts[:, 1] - cy) ** 2
+                result, tuple(opposite.astype(int)), tuple(tip),
+                (255, 0, 255), 5
             )
 
-            tip = hull_pts[np.argmax(distances)]
-            tip_x = int(tip[0])
-            tip_y = int(tip[1])
-            
-            # --- EXTEND LINE TO OPPOSITE SIDE ---
-            
-            # 1. Get the direction vector from centroid to tip
-            dx = tip_x - cx
-            dy = tip_y - cy
-            
-            # 2. Normalize this vector so its length is 1
-            line_len = np.sqrt(dx**2 + dy**2)
-            ux = dx / line_len
-            uy = dy / line_len
-            
-            # 3. Project all hull points onto this line axis to find the opposite extreme
-            # (This ensures the opposite point is perfectly aligned with the diagonal)
-            hull_vectors_x = hull_pts[:, 0] - cx
-            hull_vectors_y = hull_pts[:, 1] - cy
-            projections = (hull_vectors_x * ux) + (hull_vectors_y * uy)
-            
-            # The tip is the maximum projection, the opposite side is the minimum projection
-            min_projection = np.min(projections)
-            
-            # 4. Calculate the perfect starting point on the opposite side
-            opposite_x = int(cx + min_projection * ux)
-            opposite_y = int(cy + min_projection * uy)
+        cv2.line(
+            result, (cx, 0), (cx, result.shape[0] - 1), (255, 0, 255), 5
+        )
+        cv2.circle(result, self.centroid, 7, (255, 0, 255), -1)
+        self.analyzed = result
+        return result
 
-            # Draw the FULL diagonal line passing through the centroid
-            cv2.line(
-                analyze_img,
-                (opposite_x, opposite_y), # Starts at the opposite base/stem side
-                (tip_x, tip_y),           # Ends at the tip
-                (255, 0, 255),
-                10
-            )
-####################################**        
-        self.analyzed = analyze_img
+    def pseudo_landmarks(self):
+        """Draw PlantCV's top, bottom, and centre pseudolandmarks."""
+        if self.analyzed is None:
+            self.analyze_object()
+        result = self.rgb.copy()
+        if self.contour is None or self.centroid is None:
+            self.landmarks = result
+            return result
 
-        plt.imshow(self.analyzed)
-        plt.title('Analyze Object')
-        plt.axis('off')
-        plt.show()
+        top, bottom, centre = pcv.homology.x_axis_pseudolandmarks(
+            img=self.rgb, mask=self.mask
+        )
+        for points, color in (
+            (top, (0, 0, 255)),
+            (bottom, (255, 0, 255)),
+            (centre, (255, 102, 0)),
+        ):
+            for point in np.asarray(points).reshape(-1, 2):
+                cv2.circle(result, tuple(point.astype(int)), 5, color, -1)
+        self.landmarks = result
+        return result
 
-        return self.analyzed
+    def process(self):
+        self.read_original()
+        self.gaussian_blur()
+        self.create_mask()
+        self.roi_objects()
+        self.analyze_object()
+        self.pseudo_landmarks()
+        return self
 
     def display(self):
-        if self.rgb is None:
-            self.read_orginal()
-        if self.blur is None:
-            self.gaussian_blur()
-        if self.mask is None:
-            self.mask_filter()
-
-        fig, axes = plt.subplots(1, 5, figsize=(15, 6))
-        axes[0].imshow(self.rgb)
-        axes[0].set_title("Figure I.1 : Original")
-        axes[0].axis("off")
-
-        axes[1].imshow(self.blur, cmap="gray")
-        axes[1].set_title("Figure II.2 : Blur/Threshold")
-        axes[1].axis("off")
-
-        axes[2].imshow(self.mask)
-        axes[2].set_title("Figure IV.3 :Masked")
-        axes[2].axis("off")
-
-        axes[3].imshow(self.roi)
-        axes[3].set_title("Figure V.4 :Roi")
-        axes[3].axis("off")
-
-        axes[4].imshow(self.analyzed)
-        axes[4].set_title("Figure VI.3 :Analysed ")
-        axes[4].axis("off")
-
-        plt.tight_layout()
+        """Display the exact seven-panel sequence used in the project brief."""
+        if self.landmarks is None:
+            self.process()
+        figures = [
+            ("Figure IV.1: Original", self.rgb, None),
+            ("Figure IV.2: Gaussian blur", self.blur, "gray"),
+            ("Figure IV.3: Mask", self.masked, None),
+            ("Figure IV.4: Roi objects", self.roi, None),
+            ("Figure IV.5: Analyze object", self.analyzed, None),
+            ("Figure IV.6: Pseudolandmarks", self.landmarks, None),
+        ]
+        fig, axes = plt.subplots(3, 2, figsize=(10, 14))
+        axes = axes.ravel()
+        for axis, (title, image, cmap) in zip(axes, figures):
+            axis.imshow(image, cmap=cmap)
+            axis.set_title(title)
+            axis.axis("off")
+        fig.tight_layout()
+        histogram, histogram_axis = plt.subplots(figsize=(10, 6))
+        self._plot_histogram(histogram_axis)
+        histogram.tight_layout()
         plt.show()
-    
-def Execute_filter(tools:handytools):
-    leaf  =  Transforme(tools)
-    leaf.read_orginal()
-    leaf.gaussian_blur()
-    leaf.mask_filter()
-    leaf.Roi()
-    leaf.analyze_object()
-    leaf.display()
+
+    def _plot_histogram(self, axis):
+        lab = cv2.cvtColor(self.rgb, cv2.COLOR_RGB2LAB)
+        hsv = cv2.cvtColor(self.rgb, cv2.COLOR_RGB2HSV)
+        channels = (
+            ("blue", self.rgb[:, :, 2], "blue"),
+            ("blue-yellow", lab[:, :, 2], "gold"),
+            ("green", self.rgb[:, :, 1], "green"),
+            ("green-magenta", lab[:, :, 1], "magenta"),
+            ("hue", hsv[:, :, 0], "blueviolet"),
+            ("lightness", lab[:, :, 0], "dimgray"),
+            ("red", self.rgb[:, :, 0], "red"),
+            ("saturation", hsv[:, :, 1], "cyan"),
+            ("value", hsv[:, :, 2], "orange"),
+        )
+        # The reference histogram is calculated from the complete input image,
+        # including the background, rather than from the segmented leaf only.
+        selected = np.ones(self.rgb.shape[:2], dtype=bool)
+        for name, channel, color in channels:
+            values = channel[selected]
+            counts, edges = np.histogram(values, bins=100, range=(0, 256))
+            # PlantCV reports each channel against all three image channels.
+            proportions = counts / (values.size * 3) * 100
+            axis.plot(
+                (edges[:-1] + edges[1:]) / 2, proportions,
+                color=color, label=name,
+            )
+        axis.set_facecolor("#eaeaf2")
+        axis.grid(True, color="white", linewidth=1.2)
+        axis.set_xlim(0, 256)
+        axis.set_xlabel("Pixel intensity")
+        axis.set_ylabel("Proportion of pixels (%)")
+        axis.legend(title="color Channel")
+
+    def save(self, destination):
+        """Save all transformations for this image inside *destination*."""
+        if self.landmarks is None:
+            self.process()
+        destination = Path(destination)
+        destination.mkdir(parents=True, exist_ok=True)
+        stem = self.path.stem
+        suffix = self.path.suffix or ".png"
+        images = {
+            "Original": self.rgb,
+            "GaussianBlur": self.blur,
+            "Mask": self.masked,
+            "ROI": self.roi,
+            "Analysis": self.analyzed,
+            "Pseudolandmarks": self.landmarks,
+        }
+        for name, image in images.items():
+            output = destination / f"{stem}_{name}{suffix}"
+            if image.ndim == 3:
+                image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
+            if not cv2.imwrite(str(output), image):
+                raise OSError(f"Could not write {output}")
+
+        figure, axis = plt.subplots(figsize=(8, 5))
+        self._plot_histogram(axis)
+        figure.tight_layout()
+        figure.savefig(destination / f"{stem}_ColorHistogram.png", dpi=150)
+        plt.close(figure)
+
+
+def image_paths(source):
+    return sorted(
+        path for path in Path(source).rglob("*")
+        if path.is_file() and path.suffix.lower() in IMAGE_SUFFIXES
+    )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Display or save seven leaf image transformations."
+    )
+    parser.add_argument("image", nargs="?", help="One image to display")
+    parser.add_argument(
+        "-src", metavar="DIRECTORY", help="Directory of input images"
+    )
+    parser.add_argument(
+        "-dst", metavar="DIRECTORY", help="Directory for saved transformations"
+    )
+    parser.add_argument(
+        "-mask",
+        action="store_true",
+        help="Compatibility option; every saved set includes the mask.",
+    )
+    return parser.parse_args()
 
 
 def main():
-    try:
-        assert len(sys.argv) == 2 , "argument are bad"
-    except AssertionError as e:
-        print(f"AssertionError:{e}")
-        sys.exit(1)
-    path = Path(str(sys.argv[1]))
-    tools = handytools(path, None,outdir="./tmp")
-    Execute_filter(tools)
-    # read_orginal()
+    args = parse_args()
+    if args.image and not args.src and not args.dst:
+        transformer = LeafTransformer(args.image)
+        transformer.process()
+        transformer.display()
+        return
+    if args.src and args.dst and not args.image:
+        paths = image_paths(args.src)
+        if not paths:
+            raise SystemExit(f"No supported images found in: {args.src}")
+        for path in paths:
+            transformer = LeafTransformer(path)
+            transformer.process()
+            relative_parent = path.relative_to(args.src).parent
+            transformer.save(Path(args.dst) / relative_parent)
+        print(f"Saved transformations for {len(paths)} image(s) to {args.dst}")
+        return
+    raise SystemExit(
+        "Use one image, or use both -src DIRECTORY and -dst DIRECTORY. See -h."
+    )
+
+
 if __name__ == "__main__":
     main()
-
-    
-
-    

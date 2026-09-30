@@ -17,25 +17,15 @@ from Augmentation import (
 # ─── constants ───────────────────────────────────────────────────────────────
 
 AUG_FUNCS = [ft_rotate, ft_flip, ft_shear, skew, ft_crop, distort]
-
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".JPG", ".JPEG", ".PNG"}
-
 AUG_TAGS = ["_Rotate", "_Flip", "_Shear", "_Skew", "_Crop", "_Distortion"]
-
-# 80 % of originals go to train, 20 % to val — no augmented image ever
-# enters the val split, so validation accuracy reflects true generalization.
 VAL_SPLIT = 0.2
-
 SEED = 42
 
 
 # ─── helpers ─────────────────────────────────────────────────────────────────
 
 def is_original(filename: str) -> bool:
-    """
-    Return True only for images that were NOT produced by a previous
-    augmentation run (i.e. their stem contains none of the AUG_TAGS).
-    """
     ext = Path(filename).suffix
     if ext not in IMAGE_EXTENSIONS:
         return False
